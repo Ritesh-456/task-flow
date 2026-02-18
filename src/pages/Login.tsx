@@ -40,7 +40,7 @@ const Login = () => {
           <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
             <Zap className="h-5 w-5 text-primary-foreground" />
           </div>
-          <h1 className="text-xl font-bold text-foreground">Sign in to TaskFlow</h1>
+          <h1 className="text-xl font-bold text-foreground">Sign in to Task Flow</h1>
           <p className="mt-1 text-sm text-muted-foreground">Enter your credentials to continue</p>
         </div>
 

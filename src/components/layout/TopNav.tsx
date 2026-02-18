@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Bell, Search, Menu, PanelLeftClose, Sun, Moon } from "lucide-react";
-import { mockNotifications, currentUser } from "@/data/mockData";
+import { mockNotifications } from "@/data/mockData";
 import NotificationPanel from "@/components/NotificationPanel";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/services/api";
@@ -88,12 +88,20 @@ const TopNav = ({ sidebarOpen, onToggleSidebar }: TopNavProps) => {
           </button>
 
           <div className="flex items-center gap-2 ml-1">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-              {currentUser.avatar}
-            </div>
+            {user?.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className="h-8 w-8 rounded-full object-cover ring-2 ring-primary/20"
+              />
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+                {user?.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : '??'}
+              </div>
+            )}
             <div className="hidden md:block">
-              <p className="text-sm font-medium text-foreground">{currentUser.name}</p>
-              <p className="text-xs capitalize text-muted-foreground">{currentUser.role}</p>
+              <p className="text-sm font-medium text-foreground">{user?.name || 'Loading...'}</p>
+              <p className="text-xs capitalize text-muted-foreground">{user?.role || 'User'}</p>
             </div>
           </div>
         </div>

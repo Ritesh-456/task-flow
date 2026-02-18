@@ -2,12 +2,10 @@ import { useState } from "react";
 import { Zap, Eye, EyeOff } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { useData } from "@/context/DataContext";
 import { toast } from "sonner";
 
 const Register = () => {
-  const { login } = useAuth();
-  const { addUser, users } = useData();
+  const { register } = useAuth();
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
@@ -24,34 +22,11 @@ const Register = () => {
     setError("");
 
     try {
-      // Check if user already exists
-      if (users.some(u => u.email === email)) {
-        setError("User with this email already exists.");
-        setIsLoading(false);
-        return;
-      }
-
-      const newUser = {
-        id: `u${Date.now()}`,
-        name,
-        email,
-        role: role as any,
-        avatar: name.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2),
-      };
-
-      addUser(newUser);
-
-      const currentUsers = JSON.parse(localStorage.getItem("taskflow_users") || "[]");
-      localStorage.setItem("taskflow_users", JSON.stringify([...currentUsers, newUser]));
-
-      await new Promise(resolve => setTimeout(resolve, 100)); // clear potential race conditions
-
-      const success = await login(email, password);
+      const success = await register(name, email, password, role);
       if (success) {
-        toast.success("Account created successfully!");
         navigate("/");
       } else {
-        setError("Failed to login after registration.");
+        setError("Registration failed. Please try again.");
       }
     } catch (err) {
       setError("An error occurred. Please try again.");
@@ -68,7 +43,7 @@ const Register = () => {
             <Zap className="h-5 w-5 text-primary-foreground" />
           </div>
           <h1 className="text-xl font-bold text-foreground">Create your account</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Get started with TaskFlow</p>
+          <p className="mt-1 text-sm text-muted-foreground">Get started with Task Flow</p>
         </div>
 
         <form className="space-y-4" onSubmit={handleSubmit}>

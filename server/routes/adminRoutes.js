@@ -6,7 +6,8 @@ const {
     updateUserRole,
     deleteUser,
     getProjects,
-    getActivityLogs
+    getActivityLogs,
+    getTasks
 } = require('../controllers/adminController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
@@ -20,5 +21,6 @@ router.put('/users/:id/role', updateUserRole);
 router.delete('/users/:id', deleteUser);
 router.get('/projects', getProjects);
 router.get('/activity', getActivityLogs);
+router.get('/tasks', getTasks);
 
 module.exports = router;

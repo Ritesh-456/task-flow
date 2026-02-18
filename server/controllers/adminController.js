@@ -124,11 +124,27 @@ const getActivityLogs = async (req, res) => {
     }
 };
 
+// @desc    Get all tasks (Admin view)
+// @route   GET /api/admin/tasks
+// @access  Private/Admin
+const getTasks = async (req, res) => {
+    try {
+        const tasks = await Task.find({})
+            .populate('assignedTo', 'name email avatar')
+            .populate('projectId', 'name')
+            .sort({ createdAt: -1 });
+        res.json(tasks);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     getSystemStats,
     getUsers,
     updateUserRole,
     deleteUser,
     getProjects,
-    getActivityLogs
+    getActivityLogs,
+    getTasks
 };

@@ -23,22 +23,43 @@ const seedAdmin = async () => {
 
         if (userExists) {
             console.log('Admin user already exists.');
-            console.log('Email: admin@taskflow.com');
-            console.log('Password: (existing password)');
         } else {
-            console.log('Creating admin user...');
-            const admin = await User.create({
+            console.log('Seeding initial users...');
+
+            // Core Admin
+            await User.create({
                 name: 'Admin User',
-                email: adminEmail,
+                email: 'admin@taskflow.com',
                 password: 'admin123',
                 role: 'admin',
-                avatar: 'https://github.com/shadcn.png',
+                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin',
                 preferences: { theme: 'dark' },
-                security: { loginHistory: [] }
             });
-            console.log('Admin user created successfully.');
-            console.log('Email: admin@taskflow.com');
-            console.log('Password: admin123');
+
+            // Manager
+            await User.create({
+                name: 'Sarah Chen',
+                email: 'manager@taskflow.com',
+                password: 'manager123',
+                role: 'manager',
+                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah',
+                preferences: { theme: 'light' },
+            });
+
+            // Employee
+            await User.create({
+                name: 'James Wilson',
+                email: 'employee@taskflow.com',
+                password: 'employee123',
+                role: 'employee',
+                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=James',
+                preferences: { theme: 'dark' },
+            });
+
+            console.log('Users seeded successfully:');
+            console.log('- admin@taskflow.com (admin123)');
+            console.log('- manager@taskflow.com (manager123)');
+            console.log('- employee@taskflow.com (employee123)');
         }
         process.exit();
     } catch (error) {
