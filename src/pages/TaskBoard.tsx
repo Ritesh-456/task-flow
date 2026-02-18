@@ -1,6 +1,7 @@
 import { useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import KanbanColumn from "@/components/KanbanColumn";
+import SmartTaskInput from "@/components/ai/SmartTaskInput";
 import { TaskStatus, TaskPriority } from "@/types";
 import { Plus, Filter } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
@@ -124,6 +125,14 @@ const TaskBoard = () => {
               <option value="medium">Medium</option>
               <option value="low">Low</option>
             </select>
+
+            <SmartTaskInput
+              projects={projects}
+              onTaskCreated={() => {
+                // Refresh data if needed, or rely on context update
+                toast.success("Board updated");
+              }}
+            />
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>

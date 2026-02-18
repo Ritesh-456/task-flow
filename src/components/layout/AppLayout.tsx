@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Menu } from "lucide-react";
 import Sidebar from "./Sidebar";
 import TopNav from "./TopNav";
+import AIChatAssistant from "../ai/AIChatAssistant";
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   // Initialize sidebar from localStorage or default
@@ -45,7 +46,9 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         <TopNav sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
         <main className="flex-1 p-4 md:p-6 overflow-x-hidden">{children}</main>
       </div>
+      <AIChatAssistant />
     </div>
+
   );
 };
 

@@ -57,6 +57,8 @@ export interface Task {
   assignedTo: string | User;
   createdBy?: string;
   projectId: string;
+  aiPriority?: string;
+  aiRationale?: string;
 }
 
 export interface Notification {

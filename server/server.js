@@ -30,6 +30,7 @@ app.use('/api/activities', require('./routes/activityRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
+app.use('/api/ai', require('./routes/aiRoutes'));
 
 // Socket.io connection
 io.on('connection', (socket) => {
