@@ -104,7 +104,7 @@ const TaskBoard = () => {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">
               {currentProject ? currentProject.name : "All Tasks"}
@@ -113,7 +113,7 @@ const TaskBoard = () => {
               {currentProject ? currentProject.description : "Kanban board view of all tasks"}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-start sm:self-auto">
             <select
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
@@ -146,7 +146,7 @@ const TaskBoard = () => {
                     <label htmlFor="desc" className="text-sm font-medium">Description</label>
                     <Textarea id="desc" value={newTaskDesc} onChange={(e) => setNewTaskDesc(e.target.value)} />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="grid gap-2">
                       <label className="text-sm font-medium">Priority</label>
                       <Select value={newTaskPriority} onValueChange={(v: any) => setNewTaskPriority(v)}>
@@ -174,7 +174,7 @@ const TaskBoard = () => {
                       </Select>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="grid gap-2">
                       <label className="text-sm font-medium">Assign To</label>
                       <Select value={newTaskAssignee} onValueChange={setNewTaskAssignee}>
@@ -204,7 +204,7 @@ const TaskBoard = () => {
         </div>
 
         <DragDropContext onDragEnd={onDragEnd}>
-          <div className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-200px)]">
+          <div className="flex flex-col md:flex-row gap-4 overflow-x-hidden md:overflow-x-auto pb-4 h-auto md:h-[calc(100vh-200px)]">
             {statuses.map((status) => (
               <KanbanColumn
                 key={status}

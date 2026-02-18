@@ -13,7 +13,7 @@ const KanbanColumn = ({ status, tasks }: { status: TaskStatus; tasks: Task[] }) 
   const config = statusConfig[status];
 
   return (
-    <div className="flex min-w-[300px] flex-1 flex-col">
+    <div className="flex w-full md:min-w-[280px] md:w-80 flex-1 flex-col">
       <div className="mb-3 flex items-center gap-2 px-1">
         <div className={cn("h-2 w-2 rounded-full", config.dotClass)} />
         <h3 className="text-sm font-semibold text-foreground">{config.label}</h3>

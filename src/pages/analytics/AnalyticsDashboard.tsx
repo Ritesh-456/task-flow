@@ -59,7 +59,7 @@ const AnalyticsDashboard = () => {
                 </div>
 
                 {/* KPI Cards */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
@@ -94,7 +94,7 @@ const AnalyticsDashboard = () => {
                     </Card>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-7">
                     {/* Task Status Distribution - Pie Chart */}
                     <Card className="col-span-3">
                         <CardHeader>

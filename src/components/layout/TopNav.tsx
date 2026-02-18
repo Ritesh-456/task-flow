@@ -28,7 +28,7 @@ const TopNav = ({ sidebarOpen, onToggleSidebar }: TopNavProps) => {
             <input
               type="text"
               placeholder="Search tasks..."
-              className="h-9 w-64 rounded-md border border-border bg-surface pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="h-9 w-full min-w-[120px] md:w-64 rounded-md border border-border bg-surface pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
         </div>

@@ -63,7 +63,7 @@ const Dashboard = () => {
         {/* Recent Tasks & Projects */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Recent Tasks */}
-          <div className="rounded-lg border border-border bg-card">
+          <div className="rounded-lg border border-border bg-card overflow-hidden">
             <div className="border-b border-border px-5 py-4">
               <h2 className="text-sm font-semibold text-foreground">Recent Tasks</h2>
             </div>

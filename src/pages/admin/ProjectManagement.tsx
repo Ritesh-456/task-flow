@@ -41,23 +41,23 @@ const ProjectManagement = () => {
                     <p className="text-muted-foreground">Overview of all projects in the organization.</p>
                 </div>
 
-                <div className="rounded-md border">
+                <div className="rounded-md border overflow-x-auto">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Project Name</TableHead>
-                                <TableHead>Owner</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Task Count</TableHead>
+                                <TableHead className="whitespace-nowrap">Project Name</TableHead>
+                                <TableHead className="whitespace-nowrap">Owner</TableHead>
+                                <TableHead className="whitespace-nowrap">Status</TableHead>
+                                <TableHead className="text-right whitespace-nowrap">Task Count</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {projects.map((project) => (
                                 <TableRow key={project._id || project.id}>
-                                    <TableCell className="font-medium">{project.name}</TableCell>
-                                    <TableCell>{(project.owner as any)?.name || 'Unknown'}</TableCell>
-                                    <TableCell className="capitalize">{project.status || 'Active'}</TableCell>
-                                    <TableCell className="text-right">{project.taskCount || 0}</TableCell>
+                                    <TableCell className="font-medium whitespace-nowrap">{project.name}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{(project.owner as any)?.name || 'Unknown'}</TableCell>
+                                    <TableCell className="capitalize whitespace-nowrap">{project.status || 'Active'}</TableCell>
+                                    <TableCell className="text-right whitespace-nowrap">{project.taskCount || 0}</TableCell>
                                 </TableRow>
                             ))}
                             {!isLoading && projects.length === 0 && (

@@ -76,23 +76,23 @@ const UserManagement = () => {
                     <p className="text-muted-foreground">Manage users, roles, and access.</p>
                 </div>
 
-                <div className="rounded-md border">
+                <div className="rounded-md border overflow-x-auto">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Email</TableHead>
-                                <TableHead>Role</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                                <TableHead className="whitespace-nowrap">Name</TableHead>
+                                <TableHead className="whitespace-nowrap">Email</TableHead>
+                                <TableHead className="whitespace-nowrap">Role</TableHead>
+                                <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {users.map((user) => (
                                 <TableRow key={user._id || user.id}>
-                                    <TableCell className="font-medium">{user.name}</TableCell>
-                                    <TableCell>{user.email}</TableCell>
-                                    <TableCell className="capitalize">{user.role}</TableCell>
-                                    <TableCell className="text-right">
+                                    <TableCell className="font-medium whitespace-nowrap">{user.name}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{user.email}</TableCell>
+                                    <TableCell className="capitalize whitespace-nowrap">{user.role}</TableCell>
+                                    <TableCell className="text-right whitespace-nowrap">
                                         <div className="flex justify-end gap-2">
                                             <Button
                                                 variant="ghost"
