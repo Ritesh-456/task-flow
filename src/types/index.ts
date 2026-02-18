@@ -4,38 +4,57 @@ export type TaskPriority = "low" | "medium" | "high";
 export type NotificationType = "task_assigned" | "status_updated" | "deadline_reminder";
 
 export interface User {
-  id: string;
+  _id?: string; // MongoDB ID
+  id?: string; // Kept for backward compatibility if needed, but prefer _id
   name: string;
   email: string;
-  role: UserRole;
-  avatar: string;
+  role: UserRole | string; // Allow string to handle flexible backend responses initially
+  avatar?: string;
+  createdAt?: string;
+  preferences?: {
+    theme?: string;
+    language?: string;
+    timezone?: string;
+  };
+  security?: {
+    lastPasswordChange?: string;
+    loginHistory?: {
+      date: string;
+      ip: string;
+      device: string;
+    }[];
+  };
 }
 
 export interface Project {
-  id: string;
+  _id?: string;
+  id?: string;
   name: string;
   description: string;
-  members: string[];
-  createdBy: string;
-  createdAt: string;
-  taskCount: number;
-  completedCount: number;
+  members: { user: string; role: string }[] | string[];
+  owner?: string | User;
+  status?: string;
+  createdAt?: string;
+  taskCount?: number;
+  completedCount?: number;
 }
 
 export interface Task {
-  id: string;
+  _id?: string;
+  id?: string;
   title: string;
   description: string;
   status: TaskStatus;
   priority: TaskPriority;
   deadline: string;
-  assignedTo: string;
-  createdBy: string;
+  assignedTo: string | User;
+  createdBy?: string;
   projectId: string;
 }
 
 export interface Notification {
-  id: string;
+  _id?: string;
+  id?: string;
   type: NotificationType;
   message: string;
   read: boolean;

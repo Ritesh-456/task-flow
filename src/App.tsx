@@ -4,16 +4,34 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/context/AuthContext";
 import { DataProvider } from "@/context/DataContext";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Projects from "./pages/Projects";
 import TaskBoard from "./pages/TaskBoard";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
+// Settings Pages
+import ProfileSettings from "./pages/settings/ProfileSettings";
+import AccountSettings from "./pages/settings/AccountSettings";
+import PreferencesSettings from "./pages/settings/PreferencesSettings";
+import SecuritySettings from "./pages/settings/SecuritySettings";
+import ActivityLogs from "./pages/settings/ActivityLogs";
+import TeamManagement from "./pages/settings/TeamManagement";
+import ProjectSettings from "./pages/settings/ProjectSettings";
+
+import { useAuth } from "./context/AuthContext";
+
 const queryClient = new QueryClient();
+
+// Simple protected route wrapper
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, isLoading } = useAuth();
+  if (isLoading) return <div>Loading...</div>;
+  if (!user) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -24,12 +42,24 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/projects" element={<Projects />} />
-              <Route path="/tasks" element={<TaskBoard />} />
-              <Route path="/settings" element={<Settings />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+
+              {/* Protected Routes */}
+              <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+              <Route path="/tasks" element={<ProtectedRoute><TaskBoard /></ProtectedRoute>} />
+
+              {/* Settings Routes */}
+              <Route path="/settings" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
+              <Route path="/settings/account" element={<ProtectedRoute><AccountSettings /></ProtectedRoute>} />
+              <Route path="/settings/preferences" element={<ProtectedRoute><PreferencesSettings /></ProtectedRoute>} />
+              <Route path="/settings/security" element={<ProtectedRoute><SecuritySettings /></ProtectedRoute>} />
+              <Route path="/settings/activity" element={<ProtectedRoute><ActivityLogs /></ProtectedRoute>} />
+              <Route path="/settings/team" element={<ProtectedRoute><TeamManagement /></ProtectedRoute>} />
+              <Route path="/settings/projects" element={<ProtectedRoute><ProjectSettings /></ProtectedRoute>} />
+
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
