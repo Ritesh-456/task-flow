@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import {
     User,
@@ -27,14 +28,16 @@ const sidebarItems = [
 ];
 
 const adminItems = [
-    { icon: Users, label: "Team Management", href: "/settings/team" },
-    { icon: Folder, label: "Project Settings", href: "/settings/projects" },
+    { icon: Layout, label: "Admin Dashboard", href: "/admin" },
+    { icon: Activity, label: "Analytics", href: "/analytics" },
+    { icon: Users, label: "User Management", href: "/admin/users" },
+    { icon: Folder, label: "Project Management", href: "/admin/projects" },
+    { icon: Settings, label: "Task Monitoring", href: "/admin/tasks" },
 ];
 
 export default function SidebarLayout({ children }: SidebarLayoutProps) {
-    const location = useLocation();
-    // Mock role for now, replace with actual auth context check
-    const isAdmin = true;
+    const { user } = useAuth();
+    const isAdmin = user?.role === 'admin' || user?.role === 'manager'; // Simple check, refine as needed for specific items
 
     return (
         <AppLayout>
