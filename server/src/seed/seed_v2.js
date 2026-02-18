@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const User = require('./models/User');
-const Project = require('./models/Project');
-const Task = require('./models/Task');
-const Notification = require('./models/Notification');
-const Activity = require('./models/Activity');
+const User = require('../models/User');
+const Project = require('../models/Project');
+const Task = require('../models/Task');
+const Notification = require('../models/Notification');
+const Activity = require('../models/Activity');
 
 dotenv.config();
 

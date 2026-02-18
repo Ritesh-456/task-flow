@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Menu } from "lucide-react";
 import Sidebar from "./Sidebar";
 import TopNav from "./TopNav";
-import AIChatAssistant from "../ai/AIChatAssistant";
+import AIChatAssistant from "../components/ai/AIChatAssistant";
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   // Initialize sidebar from localStorage or default

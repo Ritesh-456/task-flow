@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Bell, Search, Menu, PanelLeftClose, Sun, Moon } from "lucide-react";
 import { mockNotifications } from "@/data/mockData";
-import NotificationPanel from "@/components/NotificationPanel";
+import NotificationPanel from "../components/ui/NotificationPanel";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/services/api";
 import { toast } from "sonner";

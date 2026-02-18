@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import SidebarLayout from "@/components/layout/SidebarLayout";
+import SidebarLayout from "@/layouts/SidebarLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Folder, CheckSquare, AlertCircle, Clock } from "lucide-react";
 import { toast } from "sonner";

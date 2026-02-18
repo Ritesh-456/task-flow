@@ -1,6 +1,6 @@
 import { useState } from "react";
-import AppLayout from "@/components/layout/AppLayout";
-import KanbanColumn from "@/components/KanbanColumn";
+import AppLayout from "@/layouts/AppLayout";
+import KanbanColumn from "@/components/tasks/KanbanColumn";
 import SmartTaskInput from "@/components/ai/SmartTaskInput";
 import { TaskStatus, TaskPriority } from "@/types";
 import { Plus, Filter } from "lucide-react";

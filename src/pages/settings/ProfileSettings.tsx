@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
-import SidebarLayout from "@/components/layout/SidebarLayout";
+import SidebarLayout from "@/layouts/SidebarLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

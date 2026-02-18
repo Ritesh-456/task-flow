@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import SidebarLayout from "@/components/layout/SidebarLayout";
+import SidebarLayout from "@/layouts/SidebarLayout";
 import { Button } from "@/components/ui/button";
 import { Laptop, Smartphone } from "lucide-react";
 import api from "@/services/api";

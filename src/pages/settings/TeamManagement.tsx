@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import SidebarLayout from "@/components/layout/SidebarLayout";
+import SidebarLayout from "@/layouts/SidebarLayout";
 import {
     Table,
     TableBody,

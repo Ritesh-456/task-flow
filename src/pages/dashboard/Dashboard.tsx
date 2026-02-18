@@ -1,4 +1,4 @@
-import AppLayout from "@/components/layout/AppLayout";
+import AppLayout from "@/layouts/AppLayout";
 import { CheckCircle2, Clock, AlertTriangle, FolderKanban, Users, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useData } from "@/context/DataContext";

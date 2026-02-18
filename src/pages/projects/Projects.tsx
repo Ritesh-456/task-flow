@@ -1,5 +1,5 @@
 import { useState } from "react";
-import AppLayout from "@/components/layout/AppLayout";
+import AppLayout from "@/layouts/AppLayout";
 import { FolderKanban, Users, Plus, MoreHorizontal } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useData } from "@/context/DataContext";

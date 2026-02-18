@@ -1,5 +1,5 @@
 import { useState } from "react";
-import SidebarLayout from "@/components/layout/SidebarLayout";
+import SidebarLayout from "@/layouts/SidebarLayout";
 import { Button } from "@/components/ui/button";
 import { Bell, Mail, MessageSquare, Clock } from "lucide-react";
 import { toast } from "sonner";

@@ -5,11 +5,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/context/AuthContext";
 import { DataProvider } from "@/context/DataContext";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Dashboard from "./pages/Dashboard";
-import Projects from "./pages/Projects";
-import TaskBoard from "./pages/TaskBoard";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Dashboard from "./pages/dashboard/Dashboard";
+import Projects from "./pages/projects/Projects";
+import TaskBoard from "./pages/tasks/TaskBoard";
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
 import NotFound from "./pages/NotFound";
 
 // Settings Pages
