@@ -1,12 +1,15 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User } from "@/types";
-import { mockUsers } from "@/data/mockData";
+import api from "@/services/api";
+import { toast } from "sonner";
 
 interface AuthContextType {
     user: User | null;
-    login: (email: string) => Promise<boolean>;
-    logout: () => void;
     isLoading: boolean;
+    login: (email: string, password: string) => Promise<boolean>;
+    register: (name: string, email: string, password: string, role?: string) => Promise<boolean>;
+    logout: () => void;
+    updateUser: (userData: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,34 +19,74 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const storedUser = localStorage.getItem("taskflow_user");
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-        }
-        setIsLoading(false);
+        const checkAuth = async () => {
+            const storedUser = localStorage.getItem("taskflow_user");
+            if (storedUser) {
+                try {
+                    const parsedUser = JSON.parse(storedUser);
+                    setUser(parsedUser);
+                    // Optionally verify token here
+                } catch (e) {
+                    console.error("Failed to parse user", e);
+                    localStorage.removeItem("taskflow_user");
+                }
+            }
+            setIsLoading(false);
+        };
+        checkAuth();
     }, []);
 
-    const login = async (email: string) => {
-        // Check localStorage for users first, then fall back to mockUsers
-        const storedUsers = localStorage.getItem("taskflow_users");
-        const users: User[] = storedUsers ? JSON.parse(storedUsers) : mockUsers;
-
-        const foundUser = users.find((u) => u.email === email);
-        if (foundUser) {
-            setUser(foundUser);
-            localStorage.setItem("taskflow_user", JSON.stringify(foundUser));
+    const login = async (email: string, password: string) => {
+        setIsLoading(true);
+        try {
+            const { data } = await api.post("/auth/login", { email, password });
+            setUser(data);
+            localStorage.setItem("taskflow_user", JSON.stringify(data));
+            toast.success("Welcome back!");
             return true;
+        } catch (error: any) {
+            console.error(error);
+            toast.error(error.response?.data?.message || "Login failed");
+            return false;
+        } finally {
+            setIsLoading(false);
         }
-        return false;
+    };
+
+    const register = async (name: string, email: string, password: string, role: string = 'employee') => {
+        setIsLoading(true);
+        try {
+            const { data } = await api.post("/auth/register", { name, email, password, role });
+            setUser(data);
+            localStorage.setItem("taskflow_user", JSON.stringify(data));
+            toast.success("Account created successfully!");
+            return true;
+        } catch (error: any) {
+            console.error(error);
+            toast.error(error.response?.data?.message || "Registration failed");
+            return false;
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const logout = () => {
         setUser(null);
         localStorage.removeItem("taskflow_user");
+        toast.info("Logged out successfully");
+    };
+
+    const updateUser = (userData: Partial<User>) => {
+        setUser(prev => {
+            if (!prev) return null;
+            const updated = { ...prev, ...userData };
+            localStorage.setItem("taskflow_user", JSON.stringify(updated));
+            return updated;
+        });
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+        <AuthContext.Provider value={{ user, isLoading, login, register, logout, updateUser }}>
             {children}
         </AuthContext.Provider>
     );
@@ -52,7 +95,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 export const useAuth = () => {
     const context = useContext(AuthContext);
     if (context === undefined) {
-        throw new Error("useAuth must be used within an AuthProvider");
+        throw new Error("useAuth must be used within a AuthProvider");
     }
     return context;
 };
