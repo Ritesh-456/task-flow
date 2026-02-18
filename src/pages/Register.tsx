@@ -46,7 +46,7 @@ const Register = () => {
 
       await new Promise(resolve => setTimeout(resolve, 100)); // clear potential race conditions
 
-      const success = await login(email);
+      const success = await login(email, password);
       if (success) {
         toast.success("Account created successfully!");
         navigate("/");

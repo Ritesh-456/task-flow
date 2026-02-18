@@ -15,6 +15,13 @@ export interface User {
     theme?: string;
     language?: string;
     timezone?: string;
+    notifications?: {
+      email?: boolean;
+      realtime?: boolean;
+      taskAssigned?: boolean;
+      taskUpdates?: boolean;
+      deadlineReminder?: boolean;
+    };
   };
   security?: {
     lastPasswordChange?: string;

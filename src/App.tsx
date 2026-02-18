@@ -20,6 +20,7 @@ import SecuritySettings from "./pages/settings/SecuritySettings";
 import ActivityLogs from "./pages/settings/ActivityLogs";
 import TeamManagement from "./pages/settings/TeamManagement";
 import ProjectSettings from "./pages/settings/ProjectSettings";
+import NotificationSettings from "./pages/settings/NotificationSettings";
 
 import { useAuth } from "./context/AuthContext";
 
@@ -55,6 +56,7 @@ const App = () => (
               <Route path="/settings" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
               <Route path="/settings/account" element={<ProtectedRoute><AccountSettings /></ProtectedRoute>} />
               <Route path="/settings/preferences" element={<ProtectedRoute><PreferencesSettings /></ProtectedRoute>} />
+              <Route path="/settings/notifications" element={<ProtectedRoute><NotificationSettings /></ProtectedRoute>} />
               <Route path="/settings/security" element={<ProtectedRoute><SecuritySettings /></ProtectedRoute>} />
               <Route path="/settings/activity" element={<ProtectedRoute><ActivityLogs /></ProtectedRoute>} />
               <Route path="/settings/team" element={<ProtectedRoute><TeamManagement /></ProtectedRoute>} />

@@ -8,8 +8,6 @@ const connectDB = require('./config/db');
 
 dotenv.config();
 
-connectDB();
-
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -30,6 +28,8 @@ app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/projects', require('./routes/projectRoutes'));
 app.use('/api/activities', require('./routes/activityRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/analytics', require('./routes/analyticsRoutes'));
 
 // Socket.io connection
 io.on('connection', (socket) => {
@@ -50,4 +50,14 @@ app.set('socketio', io);
 
 const PORT = process.env.PORT || 5000;
 
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const startServer = async () => {
+    try {
+        await connectDB();
+        server.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
+    } catch (error) {
+        console.error('Failed to connect to DB:', error);
+        process.exit(1);
+    }
+};
+
+startServer();

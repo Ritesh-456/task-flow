@@ -50,6 +50,7 @@ const registerUser = async (req, res) => {
 // @access  Public
 const loginUser = async (req, res) => {
     const { email, password } = req.body;
+    console.log('Login attempt:', { email, passwordProvided: !!password });
 
     try {
         const user = await User.findOne({ email });
@@ -58,6 +59,13 @@ const loginUser = async (req, res) => {
             // Record login history
             const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
             const device = req.headers['user-agent'];
+
+            if (!user.security) {
+                user.security = { loginHistory: [] };
+            }
+            if (!user.security.loginHistory) {
+                user.security.loginHistory = [];
+            }
 
             user.security.loginHistory.push({ ip, device });
             // Keep only last 10 logins
@@ -79,6 +87,7 @@ const loginUser = async (req, res) => {
             res.status(401).json({ message: 'Invalid email or password' });
         }
     } catch (error) {
+        console.error('Login Error:', error);
         res.status(500).json({ message: error.message });
     }
 };

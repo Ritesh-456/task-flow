@@ -19,7 +19,7 @@ const Login = () => {
     setError("");
 
     try {
-      const success = await login(email);
+      const success = await login(email, password);
       if (success) {
         navigate("/");
         toast.success("Welcome back!");

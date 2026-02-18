@@ -34,9 +34,9 @@ const userSchema = mongoose.Schema(
     { timestamps: true }
 );
 
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function (next) { // Keep next for backward compatibility or just remove it
     if (!this.isModified('password')) {
-        next();
+        return; // Just return promise
     }
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
