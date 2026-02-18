@@ -43,7 +43,7 @@ export default function SidebarLayout({ children }: SidebarLayoutProps) {
         <AppLayout>
             <div className="flex flex-col md:flex-row gap-6 md:gap-10">
                 <aside className="md:w-1/4 lg:w-1/5 shrink-0">
-                    <nav className="flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-visible pb-4 md:pb-0">
+                    <nav className="flex flex-row md:flex-col flex-wrap gap-2 pb-4 md:pb-0">
                         {sidebarItems.map((item) => (
                             <Link
                                 key={item.href}

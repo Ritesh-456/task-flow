@@ -25,7 +25,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 try {
                     const parsedUser = JSON.parse(storedUser);
                     setUser(parsedUser);
-                    // Optionally verify token here
                 } catch (e) {
                     console.error("Failed to parse user", e);
                     localStorage.removeItem("taskflow_user");
@@ -35,6 +34,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         };
         checkAuth();
     }, []);
+
+    // Apply Theme
+    useEffect(() => {
+        const theme = user?.preferences?.theme || "dark";
+        const root = window.document.documentElement;
+
+        root.classList.remove("light", "dark");
+
+        if (theme === "system") {
+            const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light";
+            root.classList.add(systemTheme);
+        } else {
+            root.classList.add(theme);
+        }
+    }, [user]);
 
     const login = async (email: string, password: string) => {
         setIsLoading(true);

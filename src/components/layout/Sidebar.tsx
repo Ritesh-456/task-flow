@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, FolderKanban, CheckSquare, Settings, LogOut, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
@@ -16,6 +17,7 @@ interface SidebarProps {
 
 const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
   const location = useLocation();
+  const { logout } = useAuth();
 
   return (
     <aside className={`fixed left-0 top-0 z-40 flex h-screen w-60 flex-col border-r border-border bg-sidebar transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
@@ -35,6 +37,9 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
             <Link
               key={item.path}
               to={item.path}
+              onClick={() => {
+                if (window.innerWidth < 768) onToggle();
+              }}
               className={cn(
                 "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                 isActive
@@ -51,7 +56,10 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
 
       {/* Footer */}
       <div className="border-t border-border p-3">
-        <button className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+        <button
+          onClick={logout}
+          className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        >
           <LogOut className="h-4 w-4" />
           Sign Out
         </button>
