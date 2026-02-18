@@ -1,0 +1,87 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 228 12% 8%;
+    --foreground: 210 20% 92%;
+
+    --card: 228 12% 11%;
+    --card-foreground: 210 20% 92%;
+
+    --popover: 228 12% 13%;
+    --popover-foreground: 210 20% 92%;
+
+    --primary: 221 83% 58%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 228 12% 16%;
+    --secondary-foreground: 210 20% 80%;
+
+    --muted: 228 10% 18%;
+    --muted-foreground: 215 12% 52%;
+
+    --accent: 228 12% 20%;
+    --accent-foreground: 210 20% 92%;
+
+    --destructive: 0 72% 56%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 228 10% 18%;
+    --input: 228 10% 18%;
+    --ring: 221 83% 58%;
+
+    --radius: 0.5rem;
+
+    --success: 142 60% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 0 0% 8%;
+    --info: 221 83% 58%;
+
+    --priority-high: 0 72% 56%;
+    --priority-medium: 38 92% 55%;
+    --priority-low: 142 60% 45%;
+
+    --sidebar-background: 228 12% 6%;
+    --sidebar-foreground: 215 12% 52%;
+    --sidebar-primary: 221 83% 58%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 228 12% 14%;
+    --sidebar-accent-foreground: 210 20% 92%;
+    --sidebar-border: 228 10% 14%;
+    --sidebar-ring: 221 83% 58%;
+
+    --surface: 228 12% 14%;
+    --surface-hover: 228 12% 18%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted)) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted));
+    border-radius: 3px;
+  }
+}
