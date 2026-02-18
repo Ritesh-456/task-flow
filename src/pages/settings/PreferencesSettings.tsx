@@ -14,7 +14,7 @@ import api from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
 
 export default function PreferencesSettings() {
-    const { user } = useAuth();
+    const { user, updateUser } = useAuth();
     const [theme, setTheme] = useState("dark");
     const [language, setLanguage] = useState("en");
     const [timezone, setTimezone] = useState("UTC");
@@ -32,6 +32,17 @@ export default function PreferencesSettings() {
         setIsLoading(true);
         try {
             await api.put("/users/preferences", { theme, language, timezone });
+
+            // Update local user context to trigger theme change immediately
+            updateUser({
+                preferences: {
+                    ...user?.preferences,
+                    theme,
+                    language,
+                    timezone
+                } as any
+            });
+
             toast.success("Preferences saved successfully");
         } catch (error: any) {
             toast.error("Failed to save preferences");

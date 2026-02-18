@@ -41,8 +41,8 @@ export default function SidebarLayout({ children }: SidebarLayoutProps) {
 
     return (
         <AppLayout>
-            <div className="flex flex-col md:flex-row gap-6 md:gap-10">
-                <aside className="md:w-1/4 lg:w-1/5 shrink-0">
+            <div className="flex flex-col md:flex-row gap-8 md:gap-12">
+                <aside className="md:w-1/3 lg:w-1/4 shrink-0">
                     <nav className="flex flex-row md:flex-col flex-wrap gap-2 pb-4 md:pb-0">
                         {sidebarItems.map((item) => (
                             <Link

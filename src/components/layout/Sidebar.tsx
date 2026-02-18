@@ -20,7 +20,7 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
   const { logout } = useAuth();
 
   return (
-    <aside className={`fixed left-0 top-0 z-40 flex h-screen w-60 flex-col border-r border-border bg-sidebar transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
+    <aside className={`fixed left-0 top-0 z-50 flex h-screen w-60 flex-col border-r border-border bg-sidebar transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
       {/* Logo */}
       <div className="flex h-14 items-center gap-2 border-b border-border px-5">
         <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary">

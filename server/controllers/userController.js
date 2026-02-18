@@ -58,16 +58,30 @@ const updateUserProfile = async (req, res) => {
 // @access  Private
 const updateUserPreferences = async (req, res) => {
     try {
+        // Use req.user directly since it's already fetched by middleware
         const user = await User.findById(req.user._id);
 
         if (user) {
-            user.preferences = { ...user.preferences, ...req.body };
+            // Update fields individually to avoid Mongoose subdocument spread issues
+            if (req.body.theme) user.preferences.theme = req.body.theme;
+            if (req.body.language) user.preferences.language = req.body.language;
+            if (req.body.timezone) user.preferences.timezone = req.body.timezone;
+
+            // Handle notifications separately if provided
+            if (req.body.notifications) {
+                user.preferences.notifications = {
+                    ...user.preferences.notifications,
+                    ...req.body.notifications
+                };
+            }
+
             const updatedUser = await user.save();
             res.json(updatedUser.preferences);
         } else {
             res.status(404).json({ message: 'User not found' });
         }
     } catch (error) {
+        console.error('Update Preferences Error:', error);
         res.status(500).json({ message: error.message });
     }
 };

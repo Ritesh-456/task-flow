@@ -1,11 +1,33 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu } from "lucide-react";
 import Sidebar from "./Sidebar";
 import TopNav from "./TopNav";
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
-  // Initialize sidebar closed on mobile, open on desktop
-  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
+  // Initialize sidebar from localStorage or default
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    // Only persist for desktop, always closed by default on mobile on first load
+    if (window.innerWidth < 768) return false;
+
+    // Check local storage for desktop preference
+    const saved = localStorage.getItem("sidebarOpen");
+    if (saved !== null) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return true;
+      }
+    }
+    return true; // Default to open on desktop
+  });
+
+  // Persist state to localStorage whenever it changes
+  useEffect(() => {
+    // Only save preference if on desktop to avoid saving "closed" state from mobile interaction
+    if (window.innerWidth >= 768) {
+      localStorage.setItem("sidebarOpen", JSON.stringify(sidebarOpen));
+    }
+  }, [sidebarOpen]);
 
   return (
     <div className="flex min-h-screen bg-background relative">
@@ -14,7 +36,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-30 md:hidden"
+          className="fixed inset-0 bg-background/80 backdrop-blur-md z-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
