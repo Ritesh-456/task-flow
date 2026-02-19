@@ -6,6 +6,7 @@ export type NotificationType = "task_assigned" | "status_updated" | "deadline_re
 export interface User {
   _id?: string; // MongoDB ID
   id?: string; // Kept for backward compatibility if needed, but prefer _id
+  token?: string;
   name: string;
   email: string;
   role: UserRole | string; // Allow string to handle flexible backend responses initially

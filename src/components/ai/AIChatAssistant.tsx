@@ -56,7 +56,7 @@ const AIChatAssistant = () => {
             {!isOpen && (
                 <button
                     onClick={() => setIsOpen(true)}
-                    className="fixed bottom-6 right-6 z-50 flex h-14 w-14 animate-bounce items-center justify-center rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 shadow-lg transition-transform hover:scale-110 active:scale-95"
+                    className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex h-14 w-14 animate-bounce items-center justify-center rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 shadow-lg transition-transform hover:scale-110 active:scale-95"
                 >
                     <Sparkles className="h-6 w-6 text-white" />
                 </button>
@@ -64,7 +64,7 @@ const AIChatAssistant = () => {
 
             {/* Chat Window */}
             {isOpen && (
-                <div className="fixed bottom-6 right-6 z-50 flex h-[500px] w-full max-w-[380px] flex-col rounded-2xl border bg-background shadow-2xl animate-in slide-in-from-bottom-10 fade-in duration-300">
+                <div className="fixed bottom-0 right-0 z-50 flex h-[85vh] w-full flex-col border bg-background shadow-2xl animate-in slide-in-from-bottom-10 fade-in duration-300 sm:bottom-6 sm:right-6 sm:h-[500px] sm:w-[380px] sm:rounded-2xl rounded-t-2xl">
                     {/* Header */}
                     <div className="flex items-center justify-between rounded-t-2xl bg-gradient-to-r from-violet-600 to-indigo-600 p-4 text-white">
                         <div className="flex items-center gap-2">
