@@ -48,6 +48,16 @@ const userSchema = mongoose.Schema(
                 },
             ],
         },
+        // Performance System
+        performance: {
+            rating: { type: Number, default: 5.0, min: 1.0, max: 10.0 },
+            completedTasks: { type: Number, default: 0 },
+            pendingTasks: { type: Number, default: 0 },
+            overdueTasks: { type: Number, default: 0 },
+            activeProjects: { type: Number, default: 0 },
+            lastActiveAt: { type: Date, default: Date.now }
+        },
+        isAvailable: { type: Boolean, default: true }
     },
     { timestamps: true }
 );
@@ -56,6 +66,14 @@ userSchema.index({ teamId: 1 });
 userSchema.index({ reportsTo: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ inviteCode: 1 });
+userSchema.index({ 'performance.rating': -1 });
+userSchema.index({ isAvailable: 1 });
+userSchema.index({ teamId: 1, 'performance.rating': -1 }); // Leaderboard query
+
+userSchema.index({ 'performance.rating': -1 });
+userSchema.index({ isAvailable: 1 });
+userSchema.index({ teamId: 1, 'performance.rating': -1 }); // Leaderboard query
+
 
 
 userSchema.pre('save', async function (next) { // Keep next for backward compatibility or just remove it

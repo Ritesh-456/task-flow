@@ -33,6 +33,10 @@ app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/ai', require('./routes/aiRoutes'));
 app.use('/api/teams', require('./routes/teamRoutes'));
 app.use('/api/tasks', require('./routes/taskRoutes'));
+app.use('/api/performance', require('./routes/performanceRoutes'));
+
+// Initialize Cron Jobs
+require('./cron')();
 
 // Socket.io connection
 io.on('connection', (socket) => {
@@ -45,6 +49,10 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         console.log('User disconnected:', socket.id);
+    });
+
+    socket.on('performance_update', (userId) => {
+        io.emit('performance_updated', userId);
     });
 });
 

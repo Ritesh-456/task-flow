@@ -1,6 +1,47 @@
 const Task = require('../models/Task');
 const User = require('../models/User');
 
+// Helper to update user performance
+const updatePerformance = async (userId) => {
+    try {
+        const user = await User.findById(userId);
+        if (!user) return;
+
+        const tasks = await Task.find({ assignedTo: userId });
+
+        const total = tasks.length;
+        if (total === 0) return;
+
+        const completed = tasks.filter(t => t.status === 'done').length;
+        const pending = tasks.filter(t => t.status !== 'done').length;
+        const overdue = tasks.filter(t => t.deadline && new Date(t.deadline) < new Date() && t.status !== 'done').length;
+
+        // Rating Formula: (Completed / Total) * 10 - (Overdue * 0.5)
+        let rating = (completed / total) * 10;
+        rating = rating - (overdue * 0.5);
+
+        // Clamp rating
+        rating = Math.max(1.0, Math.min(10.0, rating));
+
+        user.performance = {
+            rating: parseFloat(rating.toFixed(1)),
+            completedTasks: completed,
+            pendingTasks: pending,
+            overdueTasks: overdue,
+            activeProjects: user.performance?.activeProjects || 0, // Keep existing or update elsewhere
+            lastActiveAt: new Date()
+        };
+
+        // Availability Logic
+        // Available if pending < 5 (Example threshold)
+        user.isAvailable = pending < 5;
+
+        await user.save();
+    } catch (error) {
+        console.error('Error updating performance:', error);
+    }
+};
+
 // @desc    Get all tasks
 // @route   GET /api/tasks
 // @access  Private

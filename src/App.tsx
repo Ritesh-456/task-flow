@@ -28,6 +28,7 @@ import UserManagement from "./pages/admin/UserManagement";
 import ProjectManagement from "./pages/admin/ProjectManagement";
 import TaskMonitoring from "./pages/admin/TaskMonitoring";
 import AnalyticsDashboard from "./pages/analytics/AnalyticsDashboard";
+import PerformanceDashboard from "./pages/performance/PerformanceDashboard";
 
 import { useAuth } from "./context/AuthContext";
 
@@ -75,6 +76,12 @@ const App = () => (
               <Route path="/admin/projects" element={<ProtectedRoute><ProjectManagement /></ProtectedRoute>} />
               <Route path="/admin/tasks" element={<ProtectedRoute><TaskMonitoring /></ProtectedRoute>} />
               <Route path="/analytics" element={<ProtectedRoute><AnalyticsDashboard /></ProtectedRoute>} />
+
+              <Route path="/admin/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
+              <Route path="/admin/projects" element={<ProtectedRoute><ProjectManagement /></ProtectedRoute>} />
+              <Route path="/admin/tasks" element={<ProtectedRoute><TaskMonitoring /></ProtectedRoute>} />
+              <Route path="/analytics" element={<ProtectedRoute><AnalyticsDashboard /></ProtectedRoute>} />
+              <Route path="/performance" element={<ProtectedRoute><PerformanceDashboard /></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>

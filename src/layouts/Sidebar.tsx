@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, FolderKanban, CheckSquare, Settings, LogOut, Zap } from "lucide-react";
+import { LayoutDashboard, FolderKanban, CheckSquare, Settings, LogOut, Zap, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 
@@ -7,6 +7,7 @@ const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
   { icon: FolderKanban, label: "Projects", path: "/projects" },
   { icon: CheckSquare, label: "Tasks", path: "/tasks" },
+  { icon: TrendingUp, label: "Performance", path: "/performance" },
   { icon: Settings, label: "Settings", path: "/settings" },
 ];
 

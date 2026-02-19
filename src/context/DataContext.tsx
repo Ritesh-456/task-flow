@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { Project, Task, User, Notification } from "@/types";
 import { mockProjects, mockTasks, mockUsers, mockNotifications } from "@/data/mockData";
 import api from "@/services/api";
+export { api };
 import { toast } from "sonner";
 
 
