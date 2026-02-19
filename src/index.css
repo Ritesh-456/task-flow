@@ -58,6 +58,14 @@
 
     --surface: 0 0% 98%;
     --surface-hover: 0 0% 96%;
+
+    /* Landing Page Variables */
+    --gradient-primary: linear-gradient(135deg, hsl(234 85% 60%), hsl(258 80% 60%));
+    --gradient-accent: linear-gradient(135deg, hsl(16 90% 58%), hsl(340 82% 56%));
+    --gradient-hero: linear-gradient(180deg, hsl(220 20% 97%) 0%, hsl(234 40% 95%) 100%);
+    --shadow-soft: 0 2px 15px -3px hsl(234 85% 60% / 0.08), 0 4px 6px -4px hsl(234 85% 60% / 0.05);
+    --shadow-card: 0 4px 25px -5px hsl(222 47% 11% / 0.06), 0 10px 10px -5px hsl(222 47% 11% / 0.02);
+    --shadow-elevated: 0 20px 50px -12px hsl(234 85% 60% / 0.15);
   }
 
   .dark {
@@ -111,6 +119,12 @@
 
     --surface: 228 12% 14%;
     --surface-hover: 228 12% 18%;
+
+    /* Landing Page Dark Mode Variables */
+    --gradient-hero: linear-gradient(180deg, hsl(222 47% 6%) 0%, hsl(234 40% 10%) 100%);
+    --shadow-soft: 0 2px 15px -3px hsl(0 0% 0% / 0.3);
+    --shadow-card: 0 4px 25px -5px hsl(0 0% 0% / 0.3);
+    --shadow-elevated: 0 20px 50px -12px hsl(0 0% 0% / 0.4);
   }
 
   * {
@@ -140,5 +154,37 @@
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background: hsl(var(--muted));
     border-radius: 3px;
+  }
+
+  /* Landing Page Utilities */
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .gradient-accent {
+    background: var(--gradient-accent);
+  }
+
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .text-gradient {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 }

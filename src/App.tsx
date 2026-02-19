@@ -30,6 +30,10 @@ import TaskMonitoring from "./pages/admin/TaskMonitoring";
 import AnalyticsDashboard from "./pages/analytics/AnalyticsDashboard";
 import PerformanceDashboard from "./pages/performance/PerformanceDashboard";
 
+import LandingHome from "./pages/landing/LandingHome";
+import Pricing from "./pages/landing/Pricing";
+import Contact from "./pages/landing/Contact";
+
 import { useAuth } from "./context/AuthContext";
 
 const queryClient = new QueryClient();
@@ -52,10 +56,14 @@ const App = () => (
           <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <Routes>
               <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
+              <Route path="/signup" element={<Register />} />
+
+              {/* Public Routes */}
+              <Route path="/" element={<LandingHome />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/contact" element={<Contact />} />
 
               {/* Protected Routes */}
-              <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
               <Route path="/tasks" element={<ProtectedRoute><TaskBoard /></ProtectedRoute>} />

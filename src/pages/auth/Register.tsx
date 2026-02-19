@@ -37,14 +37,15 @@ const Register = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-sm animate-fade-in">
+    <div className="flex min-h-screen items-center justify-center gradient-hero px-4 py-12">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-elevated animate-fade-in">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-            <Zap className="h-5 w-5 text-primary-foreground" />
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Zap className="h-6 w-6 text-primary" />
+            <span className="font-bold text-xl text-foreground">TaskFlow</span>
           </div>
-          <h1 className="text-xl font-bold text-foreground">Create your account</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Get started with Task Flow</p>
+          <h1 className="text-2xl font-bold text-center text-foreground mb-2">Create your account</h1>
+          <p className="text-center text-sm text-muted-foreground">Start managing your team today</p>
         </div>
 
         <form className="space-y-4" onSubmit={handleSubmit}>

@@ -27,7 +27,7 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
         <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary">
           <Zap className="h-4 w-4 text-primary-foreground" />
         </div>
-        <span className="text-sm font-semibold text-foreground">Task Flow</span>
+        <span className="text-sm font-semibold text-foreground">TaskFlow</span>
       </div>
 
       {/* Navigation */}

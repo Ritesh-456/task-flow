@@ -65,11 +65,7 @@ const userSchema = mongoose.Schema(
 userSchema.index({ teamId: 1 });
 userSchema.index({ reportsTo: 1 });
 userSchema.index({ role: 1 });
-userSchema.index({ inviteCode: 1 });
-userSchema.index({ 'performance.rating': -1 });
-userSchema.index({ isAvailable: 1 });
-userSchema.index({ teamId: 1, 'performance.rating': -1 }); // Leaderboard query
-
+// inviteCode has unique: true, so index is already created
 userSchema.index({ 'performance.rating': -1 });
 userSchema.index({ isAvailable: 1 });
 userSchema.index({ teamId: 1, 'performance.rating': -1 }); // Leaderboard query
