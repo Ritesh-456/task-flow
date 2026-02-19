@@ -33,6 +33,7 @@ import PerformanceDashboard from "./pages/performance/PerformanceDashboard";
 import LandingHome from "./pages/landing/LandingHome";
 import Pricing from "./pages/landing/Pricing";
 import Contact from "./pages/landing/Contact";
+import ScrollToTop from "./components/ScrollToTop";
 
 import { useAuth } from "./context/AuthContext";
 
@@ -54,6 +55,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <ScrollToTop />
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Register />} />

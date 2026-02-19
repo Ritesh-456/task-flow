@@ -1,13 +1,18 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-const LegalSection = () => {
+interface LegalSectionProps {
+    value?: string;
+    onValueChange?: (value: string) => void;
+}
+
+const LegalSection = ({ value = "privacy", onValueChange }: LegalSectionProps) => {
     return (
-        <section className="py-20 bg-secondary/20">
+        <section className="py-20 bg-secondary/20" id="legal">
             <div className="container mx-auto px-4 max-w-4xl">
                 <h2 className="text-2xl font-bold mb-8 text-center">Legal Policies</h2>
 
-                <Tabs defaultValue="privacy" className="w-full">
+                <Tabs value={value} onValueChange={onValueChange} className="w-full">
                     <TabsList className="grid w-full grid-cols-3 mb-8">
                         <TabsTrigger value="privacy">Privacy Policy</TabsTrigger>
                         <TabsTrigger value="terms">Terms of Service</TabsTrigger>

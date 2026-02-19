@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -13,16 +13,23 @@ const navLinks = [
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const handleNavClick = (href: string) => {
     setMobileOpen(false);
     if (href.startsWith("/#")) {
       const id = href.replace("/#", "");
       if (location.pathname !== "/") {
-        window.location.href = href;
+        navigate("/");
+        // We need to wait for navigation to complete before scrolling
+        setTimeout(() => {
+          document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
         return;
       }
       document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      navigate(href);
     }
   };
 
