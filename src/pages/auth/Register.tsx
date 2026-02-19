@@ -11,6 +11,7 @@ const Register = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("employee");
+  const [inviteCode, setInviteCode] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -22,7 +23,7 @@ const Register = () => {
     setError("");
 
     try {
-      const success = await register(name, email, password, role);
+      const success = await register(name, email, password, role, inviteCode);
       if (success) {
         navigate("/");
       } else {
@@ -80,6 +81,17 @@ const Register = () => {
               <option value="employee">Employee</option>
               <option value="manager">Manager</option>
             </select>
+
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-foreground">Invite Code (Optional)</label>
+            <input
+              type="text"
+              value={inviteCode}
+              onChange={(e) => setInviteCode(e.target.value)}
+              placeholder="TEAM-CODE-123"
+              className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            />
           </div>
           <div>
             <label className="mb-1.5 block text-sm font-medium text-foreground">Password</label>
@@ -116,8 +128,8 @@ const Register = () => {
             Sign in
           </Link>
         </p>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 

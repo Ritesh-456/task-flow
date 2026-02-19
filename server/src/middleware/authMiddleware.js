@@ -18,6 +18,10 @@ const protect = async (req, res, next) => {
                 return res.status(401).json({ message: 'Not authorized, user not found' });
             }
 
+            if (!req.user.isActive) {
+                return res.status(401).json({ message: 'User account is deactivated' });
+            }
+
             next();
         } catch (error) {
             console.error(error);
@@ -31,11 +35,22 @@ const protect = async (req, res, next) => {
 };
 
 const admin = (req, res, next) => {
-    if (req.user && req.user.role === 'admin') {
+    if (req.user && req.user.role === 'super_admin') {
         next();
     } else {
-        res.status(401).json({ message: 'Not authorized as an admin' });
+        res.status(401).json({ message: 'Not authorized as super admin' });
     }
 };
 
-module.exports = { protect, admin };
+const authorize = (...roles) => {
+    return (req, res, next) => {
+        if (!roles.includes(req.user.role)) {
+            return res.status(403).json({
+                message: `User role ${req.user.role} is not authorized to access this route`
+            });
+        }
+        next();
+    };
+};
+
+module.exports = { protect, admin, authorize };

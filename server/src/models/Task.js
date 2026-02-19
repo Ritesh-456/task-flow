@@ -24,14 +24,21 @@ const taskSchema = mongoose.Schema(
             ref: 'Project',
             required: true
         },
-        createdBy: {
+        teamId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
+            ref: 'Team',
             required: true
         }
     },
     { timestamps: true }
 );
+
+taskSchema.index({ teamId: 1 });
+taskSchema.index({ assignedTo: 1 });
+taskSchema.index({ projectId: 1 });
+taskSchema.index({ status: 1 });
+taskSchema.index({ deadline: 1 });
+
 
 const Task = mongoose.model('Task', taskSchema);
 module.exports = Task;

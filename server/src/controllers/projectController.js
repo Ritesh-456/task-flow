@@ -1,14 +1,40 @@
 const Project = require('../models/Project');
 const User = require('../models/User');
 
-// @desc    Get all projects for logged in user
+// @desc    Get all projects (Team isolated)
+// @route   GET /api/projects
+// @access  Private
+// @desc    Get all projects (Team isolated)
 // @route   GET /api/projects
 // @access  Private
 const getProjects = async (req, res) => {
     try {
+        if (req.user.role === 'super_admin') {
+            const projects = await Project.find({})
+                .populate('owner', 'name email avatar')
+                .lean();
+            return res.json(projects);
+        }
+
+        if (req.user.role === 'team_admin') {
+            // See all in team
+            const projects = await Project.find({ teamId: req.user.teamId })
+                .populate('owner', 'name email avatar')
+                .lean();
+            return res.json(projects);
+        }
+
+        // Manager / Employee: See if owner or member
         const projects = await Project.find({
-            $or: [{ owner: req.user._id }, { 'members.user': req.user._id }],
-        }).populate('owner', 'name email avatar').populate('members.user', 'name email avatar');
+            $and: [
+                { teamId: req.user.teamId }, // Must be in same team
+                { $or: [{ owner: req.user._id }, { 'members.user': req.user._id }] }
+            ]
+        })
+            .populate('owner', 'name email avatar')
+            .populate('members.user', 'name email avatar')
+            .lean();
+
         res.json(projects);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -22,14 +48,16 @@ const createProject = async (req, res) => {
     try {
         const { name, description, members } = req.body;
 
-        // Process members if provided (expecting array of emails or IDs)
-        // For simplicity, let's assume UI sends emails to add
+        if (!req.user.teamId && req.user.role !== 'super_admin') {
+            return res.status(400).json({ message: 'User must belong to a team' });
+        }
 
         const project = await Project.create({
             name,
             description,
             owner: req.user._id,
-            members: [], // Initialize empty, add logic to find users by email if needed
+            teamId: req.user.teamId,
+            members: members || [],
         });
 
         res.status(201).json(project);

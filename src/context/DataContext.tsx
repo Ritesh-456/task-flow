@@ -1,6 +1,9 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Project, Task, User, Notification } from "@/types";
 import { mockProjects, mockTasks, mockUsers, mockNotifications } from "@/data/mockData";
+import api from "@/services/api";
+import { toast } from "sonner";
+
 
 interface DataContextType {
     projects: Project[];
@@ -22,89 +25,87 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const [users, setUsers] = useState<User[]>([]);
     const [notifications, setNotifications] = useState<Notification[]>([]);
 
-    // Initialize data from localStorage or mockData
+    // Initialize data from API
     useEffect(() => {
-        const loadData = () => {
-            const storedProjects = localStorage.getItem("taskflow_projects");
-            const storedTasks = localStorage.getItem("taskflow_tasks");
-            const storedUsers = localStorage.getItem("taskflow_users");
-            const storedNotifications = localStorage.getItem("taskflow_notifications");
+        const loadData = async () => {
+            const token = localStorage.getItem("taskflow_user");
+            if (!token) return;
 
-            setProjects(storedProjects ? JSON.parse(storedProjects) : mockProjects);
-            setTasks(storedTasks ? JSON.parse(storedTasks) : mockTasks);
-            setUsers(storedUsers ? JSON.parse(storedUsers) : mockUsers);
-            setNotifications(storedNotifications ? JSON.parse(storedNotifications) : mockNotifications);
+            try {
+                // Fetch Users (Team Members)
+                // Note: Ideally we should use the new endpoint /users/team-members depending on role,
+                // but let's try generic /users if it exists or fallback to what we have.
+                // Actually, DataContext usually holds "all reachable users" for assignment.
+                // Let's use /users/team-members
+                const usersRes = await api.get('/users/team-members').catch(() => ({ data: [] }));
+                setUsers(usersRes.data);
+
+                // Fetch Tasks
+                const tasksRes = await api.get('/tasks').catch(() => ({ data: [] }));
+                setTasks(tasksRes.data);
+
+                // Fetch Projects (Assuming projectRoutes exist and work, likely need update)
+                // If not, we might fall back to mock or empty.
+                const projectsRes = await api.get('/projects').catch(() => ({ data: mockProjects }));
+                setProjects(projectsRes.data);
+
+                // Notifications - hard to mock unless we have an endpoint
+                setNotifications(mockNotifications);
+
+            } catch (error) {
+                console.error("Failed to load data", error);
+            }
         };
 
         loadData();
     }, []);
 
-    // Persist data to localStorage whenever it changes
-    useEffect(() => {
-        if (projects.length > 0) localStorage.setItem("taskflow_projects", JSON.stringify(projects));
-    }, [projects]);
+    // Persist data? No, we sync with backend now. 
+    // Remove local storage effects for data, keep for Auth only (handled in AuthContext).
 
-    useEffect(() => {
-        if (tasks.length > 0) localStorage.setItem("taskflow_tasks", JSON.stringify(tasks));
-    }, [tasks]);
-
-    useEffect(() => {
-        if (users.length > 0) localStorage.setItem("taskflow_users", JSON.stringify(users));
-    }, [users]);
-
-    const addProject = (project: Project) => {
-        setProjects((prev) => [...prev, project]);
-    };
-
-    const addTask = (task: Task) => {
-        setTasks((prev) => [...prev, task]);
-        // Also update project task count if applicable
-        if (task.projectId) {
-            setProjects(prev => prev.map(p =>
-                p.id === task.projectId
-                    ? { ...p, taskCount: p.taskCount + 1 }
-                    : p
-            ));
+    const addProject = async (project: Project) => {
+        try {
+            const { data } = await api.post('/projects', project);
+            setProjects((prev) => [...prev, data]);
+        } catch (e) {
+            console.error("Failed to add project", e);
+            toast.error("Failed to add project");
         }
     };
 
-    const updateTask = (taskId: string, updates: Partial<Task>) => {
-        setTasks((prev) => {
-            const newTasks = prev.map((t) => (t.id === taskId ? { ...t, ...updates } : t));
-
-            const task = prev.find(t => t.id === taskId);
-            if (task && task.projectId && updates.status) {
-                setProjects(currentProjects => currentProjects.map(p => {
-                    if (p.id === task.projectId) {
-                        const projectTasks = newTasks.filter(t => t.projectId === p.id);
-                        const completed = projectTasks.filter(t => t.status === 'done').length;
-                        return { ...p, completedCount: completed, taskCount: projectTasks.length };
-                    }
-                    return p;
-                }));
-            }
-            return newTasks;
-        });
+    const addTask = async (task: Task) => {
+        try {
+            const { data } = await api.post('/tasks', task);
+            setTasks((prev) => [...prev, data]);
+            toast.success("Task created");
+        } catch (e) {
+            console.error("Failed to add task", e);
+            toast.error("Failed to create task");
+        }
     };
 
-    const deleteTask = (taskId: string) => {
-        setTasks(prev => {
-            const taskToDelete = prev.find(t => t.id === taskId);
-            const newTasks = prev.filter(t => t.id !== taskId);
-
-            if (taskToDelete && taskToDelete.projectId) {
-                setProjects(currentProjects => currentProjects.map(p => {
-                    if (p.id === taskToDelete.projectId) {
-                        const projectTasks = newTasks.filter(t => t.projectId === p.id);
-                        const completed = projectTasks.filter(t => t.status === 'done').length;
-                        return { ...p, completedCount: completed, taskCount: projectTasks.length };
-                    }
-                    return p;
-                }));
-            }
-            return newTasks;
-        });
+    const updateTask = async (taskId: string, updates: Partial<Task>) => {
+        try {
+            const { data } = await api.put(`/tasks/${taskId}`, updates);
+            setTasks((prev) => prev.map((t) => (t.id === taskId || t._id === taskId ? data : t)));
+        } catch (e) {
+            console.error("Failed to update task", e);
+            toast.error("Failed to update task");
+        }
     };
+
+    const deleteTask = async (taskId: string) => {
+        try {
+            await api.delete(`/tasks/${taskId}`);
+            setTasks((prev) => prev.filter(t => t.id !== taskId && t._id !== taskId));
+            toast.success("Task deleted");
+        } catch (e) {
+            console.error("Failed to delete task", e);
+            toast.error("Failed to delete task");
+        }
+    };
+
+
 
     const addUser = (user: User) => {
         setUsers((prev) => [...prev, user]);

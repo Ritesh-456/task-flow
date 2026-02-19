@@ -10,7 +10,7 @@ const generateToken = (id) => {
 // @route   POST /api/auth/register
 // @access  Public
 const registerUser = async (req, res) => {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, inviteCode } = req.body;
 
     try {
         const userExists = await User.findOne({ email });
@@ -19,14 +19,68 @@ const registerUser = async (req, res) => {
             return res.status(400).json({ message: 'User already exists' });
         }
 
+        let role = 'super_admin'; // Default first user
+        // OR 'employee' if we want strict mode. Let's default to super_admin if it's the very first user in DB, else employee ?
+        // Actually, prompt says: "super_admin (global control)". 
+
+        let teamId = null;
+        let reportsTo = null;
+        let createdBy = null;
+
+        // INVITE CODE LOGIC
+        if (inviteCode) {
+            const inviter = await User.findOne({ inviteCode });
+            if (!inviter) {
+                return res.status(400).json({ message: 'Invalid invite code' });
+            }
+
+            teamId = inviter.teamId;
+            reportsTo = inviter._id;
+            createdBy = inviter._id;
+
+            // Assign Role
+            if (inviter.role === 'super_admin') {
+                role = 'team_admin';
+            } else if (inviter.role === 'team_admin') {
+                role = 'manager';
+            } else if (inviter.role === 'manager') {
+                role = 'employee';
+            } else {
+                return res.status(400).json({ message: 'Employees cannot invite users' });
+            }
+        } else {
+            // No code -> Check if DB is empty to make Super Admin
+            const count = await User.countDocuments({});
+            if (count === 0) {
+                role = 'super_admin';
+            } else {
+                // If not first user and no code... 
+                // Maybe allow creating a new Team if they want? 
+                // Or just fail? "Invite code required".
+                // Let's allow registration as "setup_needed" or just Team Admin of a new team?
+                // For simplicity, let's default to 'team_admin' who needs to create a team, or just error.
+                // Prompt implies strict hierarchy. Let's return error if not first user.
+                return res.status(400).json({ message: 'Invite code required' });
+            }
+        }
+
         const user = await User.create({
             name,
             email,
             password,
-            role: role || 'employee',
-            preferences: {}, // Use defaults
+            role,
+            teamId,
+            reportsTo,
+            createdBy,
+            preferences: {},
             security: { loginHistory: [] }
         });
+
+        // If teamId exists, add user to team
+        if (teamId) {
+            const Team = require('../models/Team');
+            await Team.findByIdAndUpdate(teamId, { $push: { members: user._id } });
+        }
 
         if (user) {
             res.status(201).json({
@@ -34,6 +88,7 @@ const registerUser = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 role: user.role,
+                teamId: user.teamId,
                 avatar: user.avatar,
                 token: generateToken(user._id),
             });

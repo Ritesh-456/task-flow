@@ -8,7 +8,12 @@ const {
     deleteUser,
     updateUserRole
 } = require('../controllers/userController');
-const { protect, admin } = require('../middleware/authMiddleware');
+const {
+    generateInviteCode,
+    getSubordinates,
+    getTeamMembers
+} = require('../controllers/userController');
+const { protect, admin, authorize } = require('../middleware/authMiddleware');
 
 router.route('/profile')
     .get(protect, getUserProfile)
@@ -17,8 +22,13 @@ router.route('/profile')
 router.route('/preferences')
     .put(protect, updateUserPreferences);
 
+router.post('/invite', protect, authorize('super_admin', 'team_admin', 'manager'), generateInviteCode);
+router.get('/subordinates', protect, getSubordinates);
+router.get('/team-members', protect, getTeamMembers);
+
 router.route('/')
-    .get(protect, admin, getUsers);
+    .get(protect, authorize('super_admin', 'team_admin'), getUsers); // Admin sees all, TeamAdmin sees team members (logic in controller needs update or reuse getTeamMembers)
+
 
 router.route('/:id')
     .delete(protect, admin, deleteUser);

@@ -5,6 +5,7 @@ const projectSchema = mongoose.Schema(
         name: { type: String, required: true },
         description: { type: String },
         owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+        teamId: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' },
         members: [
             {
                 user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -15,6 +16,10 @@ const projectSchema = mongoose.Schema(
     },
     { timestamps: true }
 );
+
+projectSchema.index({ teamId: 1 });
+projectSchema.index({ owner: 1 });
+
 
 const Project = mongoose.model('Project', projectSchema);
 module.exports = Project;

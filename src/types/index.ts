@@ -11,6 +11,10 @@ export interface User {
   email: string;
   role: UserRole | string; // Allow string to handle flexible backend responses initially
   avatar?: string;
+  inviteCode?: string;
+  teamId?: string;
+  reportsTo?: string;
+  isActive?: boolean;
   createdAt?: string;
   preferences?: {
     theme?: string;

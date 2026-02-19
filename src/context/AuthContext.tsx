@@ -7,7 +7,7 @@ interface AuthContextType {
     user: User | null;
     isLoading: boolean;
     login: (email: string, password: string) => Promise<boolean>;
-    register: (name: string, email: string, password: string, role?: string) => Promise<boolean>;
+    register: (name: string, email: string, password: string, role?: string, inviteCode?: string) => Promise<boolean>;
     logout: () => void;
     updateUser: (userData: Partial<User>) => void;
 }
@@ -69,10 +69,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const register = async (name: string, email: string, password: string, role: string = 'employee') => {
+    const register = async (name: string, email: string, password: string, role: string = 'employee', inviteCode?: string) => {
         setIsLoading(true);
         try {
-            const { data } = await api.post("/auth/register", { name, email, password, role });
+            const { data } = await api.post("/auth/register", { name, email, password, role, inviteCode });
             setUser(data);
             localStorage.setItem("taskflow_user", JSON.stringify(data));
             toast.success("Account created successfully!");

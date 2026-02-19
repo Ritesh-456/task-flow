@@ -6,7 +6,25 @@ const userSchema = mongoose.Schema(
         name: { type: String, required: true },
         email: { type: String, required: true, unique: true },
         password: { type: String, required: true },
-        role: { type: String, enum: ['admin', 'manager', 'employee'], default: 'employee' },
+        role: {
+            type: String,
+            enum: ['super_admin', 'team_admin', 'manager', 'employee'],
+            default: 'employee'
+        },
+        teamId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Team'
+        },
+        reportsTo: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        inviteCode: { type: String, unique: true, sparse: true },
+        createdBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        isActive: { type: Boolean, default: true },
         avatar: { type: String },
         preferences: {
             theme: { type: String, default: 'dark' },
@@ -33,6 +51,12 @@ const userSchema = mongoose.Schema(
     },
     { timestamps: true }
 );
+
+userSchema.index({ teamId: 1 });
+userSchema.index({ reportsTo: 1 });
+userSchema.index({ role: 1 });
+userSchema.index({ inviteCode: 1 });
+
 
 userSchema.pre('save', async function (next) { // Keep next for backward compatibility or just remove it
     if (!this.isModified('password')) {

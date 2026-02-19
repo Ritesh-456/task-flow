@@ -31,6 +31,8 @@ app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/ai', require('./routes/aiRoutes'));
+app.use('/api/teams', require('./routes/teamRoutes'));
+app.use('/api/tasks', require('./routes/taskRoutes'));
 
 // Socket.io connection
 io.on('connection', (socket) => {

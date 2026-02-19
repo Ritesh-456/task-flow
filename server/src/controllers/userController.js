@@ -1,7 +1,8 @@
 const User = require('../models/User');
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 
-// @desc    Get user profile (including settings)
+// @desc    Get user profile
 // @route   GET /api/users/profile
 // @access  Private
 const getUserProfile = async (req, res) => {
@@ -27,12 +28,10 @@ const updateUserProfile = async (req, res) => {
         if (user) {
             user.name = req.body.name || user.name;
             user.email = req.body.email || user.email;
-            if (req.body.avatar) user.avatar = req.body.avatar;
+            user.avatar = req.body.avatar || user.avatar;
 
             if (req.body.password) {
-                // Should verify old password here ideally, but for simplicity:
                 user.password = req.body.password;
-                user.security.lastPasswordChange = Date.now();
             }
 
             const updatedUser = await user.save();
@@ -43,7 +42,7 @@ const updateUserProfile = async (req, res) => {
                 email: updatedUser.email,
                 role: updatedUser.role,
                 avatar: updatedUser.avatar,
-                preferences: updatedUser.preferences,
+                token: req.body.token, // Keep existing token
             });
         } else {
             res.status(404).json({ message: 'User not found' });
@@ -58,35 +57,21 @@ const updateUserProfile = async (req, res) => {
 // @access  Private
 const updateUserPreferences = async (req, res) => {
     try {
-        // Use req.user directly since it's already fetched by middleware
         const user = await User.findById(req.user._id);
 
         if (user) {
-            // Update fields individually to avoid Mongoose subdocument spread issues
-            if (req.body.theme) user.preferences.theme = req.body.theme;
-            if (req.body.language) user.preferences.language = req.body.language;
-            if (req.body.timezone) user.preferences.timezone = req.body.timezone;
-
-            // Handle notifications separately if provided
-            if (req.body.notifications) {
-                user.preferences.notifications = {
-                    ...user.preferences.notifications,
-                    ...req.body.notifications
-                };
-            }
-
+            user.preferences = { ...user.preferences, ...req.body };
             const updatedUser = await user.save();
             res.json(updatedUser.preferences);
         } else {
             res.status(404).json({ message: 'User not found' });
         }
     } catch (error) {
-        console.error('Update Preferences Error:', error);
         res.status(500).json({ message: error.message });
     }
 };
 
-// @desc    Get all users (Admin only)
+// @desc    Get all users
 // @route   GET /api/users
 // @access  Private/Admin
 const getUsers = async (req, res) => {
@@ -104,6 +89,7 @@ const getUsers = async (req, res) => {
 const deleteUser = async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
+
         if (user) {
             await user.deleteOne();
             res.json({ message: 'User removed' });
@@ -121,13 +107,97 @@ const deleteUser = async (req, res) => {
 const updateUserRole = async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
+
         if (user) {
             user.role = req.body.role || user.role;
             const updatedUser = await user.save();
-            res.json({ _id: updatedUser._id, role: updatedUser.role });
+            res.json(updatedUser);
         } else {
             res.status(404).json({ message: 'User not found' });
         }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Generate Invite Code
+// @route   POST /api/users/invite
+// @access  Private (Manager/Admin)
+const generateInviteCode = async (req, res) => {
+    try {
+        // Only managers+ can generate codes
+        if (!['super_admin', 'team_admin', 'manager'].includes(req.user.role)) {
+            return res.status(403).json({ message: 'Not authorized to generate invite codes' });
+        }
+
+        // Simple unique code: ROLE-RANDOM
+        const code = `${req.user.role.toUpperCase().substring(0, 3)}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+
+        req.user.inviteCode = code;
+        await req.user.save();
+
+        res.json({ inviteCode: code });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get Subordinates (Recursive)
+// @route   GET /api/users/subordinates
+// @access  Private
+const getSubordinates = async (req, res) => {
+    try {
+        const subordinates = await User.aggregate([
+            { $match: { _id: req.user._id } },
+            {
+                $graphLookup: {
+                    from: 'users',
+                    startWith: '$_id',
+                    connectFromField: '_id',
+                    connectToField: 'reportsTo',
+                    as: 'allSubordinates',
+                    depthField: 'depth'
+                }
+            },
+            { $project: { allSubordinates: 1, _id: 0 } }
+        ]);
+
+        if (!subordinates.length || !subordinates[0].allSubordinates) {
+            return res.json([]);
+        }
+
+        // Return flattened list with depth info, excluding sensitive data
+        const sanitized = subordinates[0].allSubordinates.map(sub => ({
+            _id: sub._id,
+            name: sub.name,
+            email: sub.email,
+            role: sub.role,
+            avatar: sub.avatar,
+            teamId: sub.teamId,
+            reportsTo: sub.reportsTo,
+            depth: sub.depth
+        }));
+
+        res.json(sanitized);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get Team Members
+// @route   GET /api/users/team-members
+// @access  Private
+const getTeamMembers = async (req, res) => {
+    try {
+        if (!req.user.teamId) {
+            return res.status(400).json({ message: 'User is not part of a team' });
+        }
+
+        const members = await User.find({ teamId: req.user.teamId })
+            .select('-password')
+            .lean();
+
+        res.json(members);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -140,4 +210,7 @@ module.exports = {
     getUsers,
     deleteUser,
     updateUserRole,
+    generateInviteCode,
+    getSubordinates,
+    getTeamMembers
 };

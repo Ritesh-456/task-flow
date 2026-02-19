@@ -47,11 +47,25 @@ const getUsers = async (req, res) => {
             ]
         } : {};
 
-        const count = await User.countDocuments({ ...keyword });
-        const users = await User.find({ ...keyword })
+        let query = { ...keyword };
+
+        // Team Isolation for Non-SuperAdmin
+        if (req.user.role !== 'super_admin') {
+            if (req.user.teamId) {
+                query.teamId = req.user.teamId;
+            } else {
+                // If no teamId and not super_admin, shows nothing or self? 
+                // Let's assume they can only see themselves if no team.
+                query._id = req.user._id;
+            }
+        }
+
+        const count = await User.countDocuments(query);
+        const users = await User.find(query)
             .select('-password') // Exclude password
             .limit(pageSize)
-            .skip(pageSize * (page - 1));
+            .skip(pageSize * (page - 1))
+            .lean();
 
         res.json({ users, page, pages: Math.ceil(count / pageSize), total: count });
     } catch (error) {
@@ -102,7 +116,14 @@ const deleteUser = async (req, res) => {
 const getProjects = async (req, res) => {
     try {
         // Simple list for now, can add pagination later
-        const projects = await Project.find({}).populate('owner', 'name email');
+        let query = {};
+        if (req.user.role !== 'super_admin' && req.user.teamId) {
+            query.teamId = req.user.teamId;
+        }
+
+        const projects = await Project.find(query)
+            .populate('owner', 'name email')
+            .lean();
         res.json(projects);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -129,10 +150,16 @@ const getActivityLogs = async (req, res) => {
 // @access  Private/Admin
 const getTasks = async (req, res) => {
     try {
-        const tasks = await Task.find({})
+        let query = {};
+        if (req.user.role !== 'super_admin' && req.user.teamId) {
+            query.teamId = req.user.teamId;
+        }
+
+        const tasks = await Task.find(query)
             .populate('assignedTo', 'name email avatar')
             .populate('projectId', 'name')
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .lean();
         res.json(tasks);
     } catch (error) {
         res.status(500).json({ message: error.message });
