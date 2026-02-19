@@ -24,7 +24,7 @@ import { User } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 
 export default function TeamManagement() {
-    const { user } = useAuth();
+    const { user, updateUser } = useAuth();
     const [teamMembers, setTeamMembers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [inviteCode, setInviteCode] = useState<string | null>(user?.inviteCode || null);
@@ -63,6 +63,7 @@ export default function TeamManagement() {
         try {
             const { data } = await api.post('/users/invite');
             setInviteCode(data.inviteCode);
+            updateUser({ inviteCode: data.inviteCode });
             toast.success("New invite code generated");
         } catch (error) {
             toast.error("Failed to generate invite code");

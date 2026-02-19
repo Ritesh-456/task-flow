@@ -10,7 +10,7 @@ const Register = () => {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("employee");
+  // role is determined by invite code
   const [inviteCode, setInviteCode] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -23,7 +23,7 @@ const Register = () => {
     setError("");
 
     try {
-      const success = await register(name, email, password, role, inviteCode);
+      const success = await register(name, email, password, inviteCode);
       if (success) {
         navigate("/");
       } else {
@@ -71,18 +71,7 @@ const Register = () => {
               required
             />
           </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-foreground">Role</label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm text-foreground focus:border-primary focus:outline-none"
-            >
-              <option value="employee">Employee</option>
-              <option value="manager">Manager</option>
-            </select>
 
-          </div>
           <div>
             <label className="mb-1.5 block text-sm font-medium text-foreground">Invite Code (Optional)</label>
             <input
