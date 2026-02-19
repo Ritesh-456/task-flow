@@ -6,23 +6,35 @@ import SupportCards from "@/components/landing/contact/SupportCards";
 import ContactForm from "@/components/landing/contact/ContactForm";
 import LegalSection from "@/components/landing/LegalSection";
 import FAQSection from "@/components/landing/FAQSection";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 
 const Contact = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const tab = searchParams.get("tab") || "privacy";
 
+    const location = useLocation();
+
     useEffect(() => {
-        if (searchParams.get("tab")) {
+        if (location.hash) {
+            const id = location.hash.replace("#", "");
+            const element = document.getElementById(id);
+            if (element) {
+                setTimeout(() => {
+                    element.scrollIntoView({ behavior: "smooth" });
+                }, 100);
+            }
+        } else if (searchParams.get("tab")) {
             const element = document.getElementById("legal");
             if (element) {
                 setTimeout(() => {
                     element.scrollIntoView({ behavior: "smooth" });
                 }, 100);
             }
+        } else {
+            window.scrollTo(0, 0);
         }
-    }, [searchParams]);
+    }, [location, searchParams]);
 
     const handleTabChange = (value: string) => {
         setSearchParams({ tab: value });

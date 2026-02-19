@@ -69,6 +69,14 @@ const Footer = () => {
                   Contact
                 </button>
               </li>
+              <li>
+                <button
+                  onClick={() => handleLinkClick("/contact#faq")}
+                  className="hover:text-foreground text-left"
+                >
+                  FAQ
+                </button>
+              </li>
             </ul>
           </div>
 
