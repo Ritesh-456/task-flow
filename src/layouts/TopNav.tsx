@@ -5,6 +5,13 @@ import NotificationPanel from "../components/ui/NotificationPanel";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/services/api";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TopNavProps {
   sidebarOpen: boolean;
@@ -12,7 +19,7 @@ interface TopNavProps {
 }
 
 const TopNav = ({ sidebarOpen, onToggleSidebar }: TopNavProps) => {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, previewRole, setPreviewRole } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const unreadCount = mockNotifications.filter((n) => !n.read).length;
 
@@ -20,7 +27,6 @@ const TopNav = ({ sidebarOpen, onToggleSidebar }: TopNavProps) => {
     const currentTheme = user?.preferences?.theme || "dark";
     const newTheme = currentTheme === "dark" ? "light" : "dark";
 
-    // Optimistically update local state for instant feedback
     updateUser({
       preferences: {
         ...user?.preferences,
@@ -30,10 +36,8 @@ const TopNav = ({ sidebarOpen, onToggleSidebar }: TopNavProps) => {
 
     try {
       await api.put("/users/preferences", { theme: newTheme });
-      // No toast needed for simple toggle to avoid spamming
     } catch (error) {
       console.error("Failed to save theme preference");
-      // Revert on failure
       updateUser({
         preferences: {
           ...user?.preferences,
@@ -52,7 +56,7 @@ const TopNav = ({ sidebarOpen, onToggleSidebar }: TopNavProps) => {
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <button
             onClick={onToggleSidebar}
-            className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
+            className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-surface hover:text-foreground z-50 relative pointer-events-auto"
             title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
           >
             {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
@@ -68,6 +72,22 @@ const TopNav = ({ sidebarOpen, onToggleSidebar }: TopNavProps) => {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {user?.role === 'super_admin' && (
+            <div className="hidden sm:block min-w-[140px]">
+              <Select value={previewRole || "super_admin"} onValueChange={(val) => setPreviewRole(val === "super_admin" ? null : val)}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue placeholder="Preview Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="super_admin">Super Admin View</SelectItem>
+                  <SelectItem value="team_admin">Team Admin View</SelectItem>
+                  <SelectItem value="manager">Manager View</SelectItem>
+                  <SelectItem value="employee">Employee View</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <button
             onClick={toggleTheme}
             className="inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-surface transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
@@ -101,7 +121,9 @@ const TopNav = ({ sidebarOpen, onToggleSidebar }: TopNavProps) => {
             )}
             <div className="hidden md:block">
               <p className="text-sm font-medium text-foreground">{user?.name || 'Loading...'}</p>
-              <p className="text-xs capitalize text-muted-foreground">{user?.role || 'User'}</p>
+              <p className="text-xs capitalize text-muted-foreground">
+                {previewRole ? `[${previewRole}]` : user?.role || 'User'}
+              </p>
             </div>
           </div>
         </div>

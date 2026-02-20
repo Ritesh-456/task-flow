@@ -11,7 +11,7 @@ const generateToken = (id) => {
 // @route   POST /api/auth/register
 // @access  Public
 const registerUser = async (req, res) => {
-    const { name, email, password, inviteCode } = req.body;
+    const { name, email, password, gender, role: reqRole, inviteCode } = req.body;
 
     try {
         const userExists = await User.findOne({ email }).lean();
@@ -19,11 +19,10 @@ const registerUser = async (req, res) => {
             return res.status(400).json({ message: 'User already exists' });
         }
 
-        let role = '';
+        let assignedRole = '';
         let teamId = null;
         let reportsTo = null;
         let createdBy = null;
-
         let organizationId = null;
 
         if (inviteCode) {
@@ -34,47 +33,73 @@ const registerUser = async (req, res) => {
 
             organizationId = inviter.organizationId;
 
-            // Hierarchy Logic
-            if (inviter.role === 'super_admin') {
-                role = 'team_admin';
-            } else if (inviter.role === 'team_admin') {
-                role = 'manager';
+            // Validate requested role against inviter hierarchy
+            if (inviter.role === 'super_admin' && reqRole === 'team_admin') {
+                assignedRole = reqRole;
+            } else if (inviter.role === 'team_admin' && reqRole === 'manager') {
+                assignedRole = reqRole;
                 teamId = inviter.teamId;
                 if (!teamId) return res.status(400).json({ message: 'Inviter does not have a team yet' });
-            } else if (inviter.role === 'manager') {
-                role = 'employee';
+            } else if (inviter.role === 'manager' && reqRole === 'employee') {
+                assignedRole = reqRole;
                 teamId = inviter.teamId;
             } else {
-                return res.status(403).json({ message: 'This user role cannot invite members' });
+                return res.status(403).json({ message: 'Invalid role assignment for this invite code' });
             }
 
             reportsTo = inviter._id;
             createdBy = inviter._id;
 
         } else {
-            // New user without invite code creates a new Organization
-            role = 'super_admin';
+            // New user without invite code creates a new Organization as Super Admin
+            assignedRole = 'super_admin';
 
             const Organization = require('../models/Organization');
             const newOrg = await Organization.create({
                 name: `${name}'s Organization`,
                 ownerId: new mongoose.Types.ObjectId(), // Will update after user creation
-                plan: 'Free'
+                plan: 'Basic'
             });
 
             organizationId = newOrg._id;
+
+            // Auto create Default Team for new orgs
+            const Team = require('../models/Team');
+            const newTeam = await Team.create({
+                name: "Default Team",
+                description: "Initial team created during registration",
+                organizationId: organizationId,
+                members: [] // populated down below
+            });
+            teamId = newTeam._id;
+        }
+
+        // --- Avatar Generation ---
+        let defaultAvatar = '';
+        const lowerGender = gender ? gender.toLowerCase() : 'male';
+        if (assignedRole === 'super_admin') {
+            defaultAvatar = `/avatars/${lowerGender}_super_admin.png`;
+        } else if (assignedRole === 'team_admin') {
+            defaultAvatar = `/avatars/${lowerGender}_admin.png`;
+        } else if (assignedRole === 'manager') {
+            defaultAvatar = `/avatars/${lowerGender}_manager.png`;
+        } else if (assignedRole === 'employee') {
+            defaultAvatar = `/avatars/${lowerGender}_employee.png`;
+        } else {
+            defaultAvatar = `/avatars/male_employee.png`; // Fallback
         }
 
         const user = await User.create({
             name,
             email,
             password,
-            role,
+            role: assignedRole,
             teamId,
             reportsTo,
             createdBy,
             organizationId,
             inviteCode: null,
+            avatar: defaultAvatar,
             preferences: {},
             security: { loginHistory: [] }
         });

@@ -3,6 +3,7 @@ import { Menu } from "lucide-react";
 import Sidebar from "./Sidebar";
 import TopNav from "./TopNav";
 import AIChatAssistant from "../components/ai/AIChatAssistant";
+import { cn } from "@/lib/utils";
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   // Initialize sidebar from localStorage or default
@@ -30,9 +31,34 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
     }
   }, [sidebarOpen]);
 
+  // Initialize sidebar collapsed state from localStorage or default
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (window.innerWidth < 768) return false;
+    const saved = localStorage.getItem("sidebarCollapsed");
+    if (saved !== null) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return false;
+      }
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (window.innerWidth >= 768) {
+      localStorage.setItem("sidebarCollapsed", JSON.stringify(isCollapsed));
+    }
+  }, [isCollapsed]);
+
   return (
     <div className="flex min-h-screen bg-background relative">
-      <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+      <Sidebar
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+        isCollapsed={isCollapsed}
+        onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
+      />
 
       {/* Mobile Overlay */}
       {sidebarOpen && (
@@ -42,7 +68,10 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         />
       )}
 
-      <div className={`flex flex-1 flex-col transition-all duration-300 ${sidebarOpen ? "md:pl-60" : "pl-0"}`}>
+      <div className={cn(
+        "flex flex-1 flex-col transition-all duration-300",
+        sidebarOpen && !isCollapsed ? "md:pl-60" : sidebarOpen && isCollapsed ? "md:pl-20" : "pl-0"
+      )}>
         <TopNav sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
         <main className="flex-1 p-4 md:p-6 overflow-x-hidden">{children}</main>
       </div>

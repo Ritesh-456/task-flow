@@ -10,8 +10,9 @@ const Register = () => {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  // role is determined by invite code
   const [inviteCode, setInviteCode] = useState("");
+  const [role, setRole] = useState("employee");
+  const [gender, setGender] = useState("male");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,7 +24,7 @@ const Register = () => {
     setError("");
 
     try {
-      const success = await register(name, email, password, inviteCode);
+      const success = await register(name, email, password, gender, role, inviteCode);
       if (success) {
         navigate("/dashboard");
       } else {
@@ -50,6 +51,7 @@ const Register = () => {
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           {error && <div className="text-sm text-destructive text-center">{error}</div>}
+
           <div>
             <label className="mb-1.5 block text-sm font-medium text-foreground">Full Name</label>
             <input
@@ -61,6 +63,7 @@ const Register = () => {
               required
             />
           </div>
+
           <div>
             <label className="mb-1.5 block text-sm font-medium text-foreground">Email</label>
             <input
@@ -73,16 +76,44 @@ const Register = () => {
             />
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-foreground">Role</label>
+              <select
+                value={role}
+                onChange={e => setRole(e.target.value)}
+                className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              >
+                <option value="team_admin">Team Admin</option>
+                <option value="manager">Manager</option>
+                <option value="employee">Employee</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-foreground">Gender</label>
+              <select
+                value={gender}
+                onChange={e => setGender(e.target.value)}
+                className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              >
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </div>
+          </div>
+
           <div>
             <label className="mb-1.5 block text-sm font-medium text-foreground">Invite Code (Optional)</label>
             <input
               type="text"
               value={inviteCode}
               onChange={(e) => setInviteCode(e.target.value)}
-              placeholder="TEAM-CODE-123"
+              placeholder="Leave blank to create new Organization"
               className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
+
           <div>
             <label className="mb-1.5 block text-sm font-medium text-foreground">Password</label>
             <div className="relative">
@@ -103,6 +134,7 @@ const Register = () => {
               </button>
             </div>
           </div>
+
           <button
             type="submit"
             disabled={isLoading}

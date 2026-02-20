@@ -1,12 +1,23 @@
 const Task = require('../models/Task');
 const User = require('../models/User');
 const Project = require('../models/Project');
+const { LRUCache } = require('lru-cache');
+
+// 5-minute cache for heavy aggregation pipelines
+const analyticsCache = new LRUCache({
+    max: 50,
+    ttl: 1000 * 60 * 5 // 5 mins
+});
 
 // @desc    Get analytics overview (KPIs)
 // @route   GET /api/analytics/overview
 // @access  Private/Admin/Manager
 const getOverviewStats = async (req, res) => {
     try {
+        const cacheKey = `overview_${req.user?.organizationId || 'global'}`;
+        const cached = analyticsCache.get(cacheKey);
+        if (cached) return res.json(cached);
+
         const totalTasks = await Task.countDocuments();
         const completedTasks = await Task.countDocuments({ status: 'done' });
         const pendingTasks = await Task.countDocuments({ status: { $ne: 'done' } });
@@ -18,13 +29,16 @@ const getOverviewStats = async (req, res) => {
         // Calculate Completion Rate
         const completionRate = totalTasks > 0 ? ((completedTasks / totalTasks) * 100).toFixed(1) : 0;
 
-        res.json({
+        const result = {
             totalTasks,
             completedTasks,
             pendingTasks,
             overdueTasks,
             completionRate: `${completionRate}%`
-        });
+        };
+
+        analyticsCache.set(cacheKey, result);
+        res.json(result);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -35,6 +49,10 @@ const getOverviewStats = async (req, res) => {
 // @access  Private/Admin/Manager
 const getTaskDistribution = async (req, res) => {
     try {
+        const cacheKey = `dist_${req.user?.organizationId || 'global'}`;
+        const cached = analyticsCache.get(cacheKey);
+        if (cached) return res.json(cached);
+
         const distribution = await Task.aggregate([
             {
                 $group: {
@@ -50,6 +68,7 @@ const getTaskDistribution = async (req, res) => {
             value: item.count
         }));
 
+        analyticsCache.set(cacheKey, formatted);
         res.json(formatted);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -61,6 +80,10 @@ const getTaskDistribution = async (req, res) => {
 // @access  Private/Admin/Manager
 const getTasksOverTime = async (req, res) => {
     try {
+        const cacheKey = `time_${req.user?.organizationId || 'global'}`;
+        const cached = analyticsCache.get(cacheKey);
+        if (cached) return res.json(cached);
+
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -82,11 +105,14 @@ const getTasksOverTime = async (req, res) => {
             { $sort: { _id: 1 } }
         ]);
 
-        res.json(tasks.map(t => ({
+        const formatted = tasks.map(t => ({
             date: t._id,
             created: t.created,
             completed: t.completed
-        })));
+        }));
+
+        analyticsCache.set(cacheKey, formatted);
+        res.json(formatted);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -97,6 +123,10 @@ const getTasksOverTime = async (req, res) => {
 // @access  Private/Admin/Manager
 const getUserProductivity = async (req, res) => {
     try {
+        const cacheKey = `prod_${req.user?.organizationId || 'global'}`;
+        const cached = analyticsCache.get(cacheKey);
+        if (cached) return res.json(cached);
+
         const productivity = await Task.aggregate([
             { $match: { status: 'done' } },
             {
@@ -123,6 +153,7 @@ const getUserProductivity = async (req, res) => {
             { $limit: 10 } // Top 10 users
         ]);
 
+        analyticsCache.set(cacheKey, productivity);
         res.json(productivity);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -134,6 +165,10 @@ const getUserProductivity = async (req, res) => {
 // @access  Private/Admin/Manager
 const getProjectProgress = async (req, res) => {
     try {
+        const cacheKey = `proj_${req.user?.organizationId || 'global'}`;
+        const cached = analyticsCache.get(cacheKey);
+        if (cached) return res.json(cached);
+
         const projects = await Project.find({ organizationId: req.user.organizationId }, 'name id');
         const progress = await Promise.all(projects.map(async (project) => {
             const total = await Task.countDocuments({ projectId: project.id });
@@ -144,6 +179,7 @@ const getProjectProgress = async (req, res) => {
             };
         }));
 
+        analyticsCache.set(cacheKey, progress);
         res.json(progress);
     } catch (error) {
         res.status(500).json({ message: error.message });

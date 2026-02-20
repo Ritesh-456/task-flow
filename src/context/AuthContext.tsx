@@ -6,8 +6,10 @@ import { toast } from "sonner";
 interface AuthContextType {
     user: User | null;
     isLoading: boolean;
+    previewRole: string | null;
+    setPreviewRole: (role: string | null) => void;
     login: (email: string, password: string) => Promise<boolean>;
-    register: (name: string, email: string, password: string, inviteCode?: string) => Promise<boolean>;
+    register: (name: string, email: string, password: string, gender: string, role: string, inviteCode?: string) => Promise<boolean>;
     logout: () => void;
     updateUser: (userData: Partial<User>) => void;
 }
@@ -17,6 +19,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [previewRole, setPreviewRole] = useState<string | null>(null);
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -57,6 +60,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
             const { data } = await api.post("/auth/login", { email, password });
             setUser(data);
+            setPreviewRole(null); // Reset preview role on login
             localStorage.setItem("taskflow_user", JSON.stringify(data));
             toast.success("Welcome back!");
             return true;
@@ -69,11 +73,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const register = async (name: string, email: string, password: string, inviteCode?: string) => {
+    const register = async (name: string, email: string, password: string, gender: string, role: string, inviteCode?: string) => {
         setIsLoading(true);
         try {
-            const { data } = await api.post("/auth/register", { name, email, password, inviteCode });
+            const { data } = await api.post("/auth/register", { name, email, password, gender, role, inviteCode });
             setUser(data);
+            setPreviewRole(null); // Reset preview role on register
             localStorage.setItem("taskflow_user", JSON.stringify(data));
             toast.success("Account created successfully!");
             return true;
@@ -93,6 +98,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             console.error("Failed to call logout API", e);
         }
         setUser(null);
+        setPreviewRole(null);
         localStorage.removeItem("taskflow_user");
         toast.info("Logged out successfully");
     };
@@ -107,7 +113,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, isLoading, login, register, logout, updateUser }}>
+        <AuthContext.Provider value={{ user, isLoading, previewRole, setPreviewRole, login, register, logout, updateUser }}>
             {children}
         </AuthContext.Provider>
     );

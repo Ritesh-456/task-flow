@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Zap } from "lucide-react";
+import { Menu, X, Zap, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const navLinks = [
@@ -14,8 +14,14 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
   const location = useLocation();
   const navigate = useNavigate();
+
+  const toggleTheme = () => {
+    document.documentElement.classList.toggle('dark');
+    setIsDark(!isDark);
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -83,6 +89,12 @@ const Navbar = () => {
           <Button asChild className="gradient-primary border-0 text-primary-foreground hover:opacity-90">
             <Link to="/signup">Sign Up</Link>
           </Button>
+          <button
+            onClick={toggleTheme}
+            className="ml-2 inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-muted transition-colors text-foreground"
+          >
+            {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </button>
         </div>
 
         {/* Mobile toggle */}

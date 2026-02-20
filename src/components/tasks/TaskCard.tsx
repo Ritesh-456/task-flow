@@ -4,10 +4,11 @@ import { cn } from "@/lib/utils";
 import { Calendar, User } from "lucide-react";
 import { Draggable } from "@hello-pangea/dnd";
 
-const priorityStyles = {
-  high: "bg-priority-high/15 text-priority-high",
-  medium: "bg-priority-medium/15 text-priority-medium",
-  low: "bg-priority-low/15 text-priority-low",
+const priorityStyles: Record<string, string> = {
+  high: "bg-destructive/15 text-destructive font-bold",
+  medium: "bg-warning/15 text-warning font-bold",
+  low: "bg-success/15 text-success font-bold",
+  default: "bg-muted text-muted-foreground"
 };
 
 const TaskCard = ({ task, index }: { task: Task; index: number }) => {

@@ -5,34 +5,38 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/context/AuthContext";
 import { DataProvider } from "@/context/DataContext";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Dashboard from "./pages/dashboard/Dashboard";
-import Projects from "./pages/projects/Projects";
-import TaskBoard from "./pages/tasks/TaskBoard";
-import Login from "./pages/auth/Login";
-import Register from "./pages/auth/Register";
-import NotFound from "./pages/NotFound";
+import { lazy, Suspense } from 'react';
 
-// Settings Pages
-import ProfileSettings from "./pages/settings/ProfileSettings";
-import AccountSettings from "./pages/settings/AccountSettings";
-import PreferencesSettings from "./pages/settings/PreferencesSettings";
-import SecuritySettings from "./pages/settings/SecuritySettings";
-import ActivityLogs from "./pages/settings/ActivityLogs";
-import TeamManagement from "./pages/settings/TeamManagement";
-import ProjectSettings from "./pages/settings/ProjectSettings";
-import NotificationSettings from "./pages/settings/NotificationSettings";
+// Lazy load Pages
+const Dashboard = lazy(() => import("./pages/dashboard/Dashboard"));
+const Projects = lazy(() => import("./pages/projects/Projects"));
+const TaskBoard = lazy(() => import("./pages/tasks/TaskBoard"));
+const Login = lazy(() => import("./pages/auth/Login"));
+const Register = lazy(() => import("./pages/auth/Register"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
-// Admin & Analytics Pages
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import UserManagement from "./pages/admin/UserManagement";
-import ProjectManagement from "./pages/admin/ProjectManagement";
-import TaskMonitoring from "./pages/admin/TaskMonitoring";
-import AnalyticsDashboard from "./pages/analytics/AnalyticsDashboard";
-import PerformanceDashboard from "./pages/performance/PerformanceDashboard";
+// Lazy load Settings Pages
+const ProfileSettings = lazy(() => import("./pages/settings/ProfileSettings"));
+const AccountSettings = lazy(() => import("./pages/settings/AccountSettings"));
+const PreferencesSettings = lazy(() => import("./pages/settings/PreferencesSettings"));
+const SecuritySettings = lazy(() => import("./pages/settings/SecuritySettings"));
+const ActivityLogs = lazy(() => import("./pages/settings/ActivityLogs"));
+const TeamManagement = lazy(() => import("./pages/settings/TeamManagement"));
+const ProjectSettings = lazy(() => import("./pages/settings/ProjectSettings"));
+const NotificationSettings = lazy(() => import("./pages/settings/NotificationSettings"));
 
-import LandingHome from "./pages/landing/LandingHome";
-import Pricing from "./pages/landing/Pricing";
-import Contact from "./pages/landing/Contact";
+// Lazy load Admin & Analytics Pages
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const UserManagement = lazy(() => import("./pages/admin/UserManagement"));
+const ProjectManagement = lazy(() => import("./pages/admin/ProjectManagement"));
+const TaskMonitoring = lazy(() => import("./pages/admin/TaskMonitoring"));
+const AnalyticsDashboard = lazy(() => import("./pages/analytics/AnalyticsDashboard"));
+const PerformanceDashboard = lazy(() => import("./pages/performance/PerformanceDashboard"));
+
+// Lazy load Public Pages
+const LandingHome = lazy(() => import("./pages/landing/LandingHome"));
+const Pricing = lazy(() => import("./pages/landing/Pricing"));
+const Contact = lazy(() => import("./pages/landing/Contact"));
 import ScrollToTop from "./components/ScrollToTop";
 
 import { useAuth } from "./context/AuthContext";
@@ -56,40 +60,46 @@ const App = () => (
           <Sonner />
           <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <ScrollToTop />
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Register />} />
+            <Suspense fallback={
+              <div className="flex h-screen items-center justify-center bg-background">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              </div>
+            }>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Register />} />
 
-              {/* Public Routes */}
-              <Route path="/" element={<LandingHome />} />
-              <Route path="/pricing" element={<Pricing />} />
-              <Route path="/contact" element={<Contact />} />
+                {/* Public Routes */}
+                <Route path="/" element={<LandingHome />} />
+                <Route path="/pricing" element={<Pricing />} />
+                <Route path="/contact" element={<Contact />} />
 
-              {/* Protected Routes */}
-              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
-              <Route path="/tasks" element={<ProtectedRoute><TaskBoard /></ProtectedRoute>} />
+                {/* Protected Routes */}
+                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+                <Route path="/tasks" element={<ProtectedRoute><TaskBoard /></ProtectedRoute>} />
 
-              {/* Settings Routes */}
-              <Route path="/settings" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
-              <Route path="/settings/account" element={<ProtectedRoute><AccountSettings /></ProtectedRoute>} />
-              <Route path="/settings/preferences" element={<ProtectedRoute><PreferencesSettings /></ProtectedRoute>} />
-              <Route path="/settings/notifications" element={<ProtectedRoute><NotificationSettings /></ProtectedRoute>} />
-              <Route path="/settings/security" element={<ProtectedRoute><SecuritySettings /></ProtectedRoute>} />
-              <Route path="/settings/activity" element={<ProtectedRoute><ActivityLogs /></ProtectedRoute>} />
-              <Route path="/settings/team" element={<ProtectedRoute><TeamManagement /></ProtectedRoute>} />
-              <Route path="/settings/projects" element={<ProtectedRoute><ProjectSettings /></ProtectedRoute>} />
+                {/* Settings Routes */}
+                <Route path="/settings" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
+                <Route path="/settings/account" element={<ProtectedRoute><AccountSettings /></ProtectedRoute>} />
+                <Route path="/settings/preferences" element={<ProtectedRoute><PreferencesSettings /></ProtectedRoute>} />
+                <Route path="/settings/notifications" element={<ProtectedRoute><NotificationSettings /></ProtectedRoute>} />
+                <Route path="/settings/security" element={<ProtectedRoute><SecuritySettings /></ProtectedRoute>} />
+                <Route path="/settings/activity" element={<ProtectedRoute><ActivityLogs /></ProtectedRoute>} />
+                <Route path="/settings/team" element={<ProtectedRoute><TeamManagement /></ProtectedRoute>} />
+                <Route path="/settings/projects" element={<ProtectedRoute><ProjectSettings /></ProtectedRoute>} />
 
-              {/* Admin & Analytics Routes */}
-              <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-              <Route path="/admin/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
-              <Route path="/admin/projects" element={<ProtectedRoute><ProjectManagement /></ProtectedRoute>} />
-              <Route path="/admin/tasks" element={<ProtectedRoute><TaskMonitoring /></ProtectedRoute>} />
-              <Route path="/analytics" element={<ProtectedRoute><AnalyticsDashboard /></ProtectedRoute>} />
-              <Route path="/performance" element={<ProtectedRoute><PerformanceDashboard /></ProtectedRoute>} />
+                {/* Admin & Analytics Routes */}
+                <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+                <Route path="/admin/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
+                <Route path="/admin/projects" element={<ProtectedRoute><ProjectManagement /></ProtectedRoute>} />
+                <Route path="/admin/tasks" element={<ProtectedRoute><TaskMonitoring /></ProtectedRoute>} />
+                <Route path="/analytics" element={<ProtectedRoute><AnalyticsDashboard /></ProtectedRoute>} />
+                <Route path="/performance" element={<ProtectedRoute><PerformanceDashboard /></ProtectedRoute>} />
 
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
           </BrowserRouter>
         </TooltipProvider>
       </DataProvider>

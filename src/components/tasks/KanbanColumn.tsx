@@ -28,8 +28,8 @@ const KanbanColumn = ({ status, tasks }: { status: TaskStatus; tasks: Task[] }) 
             ref={provided.innerRef}
             {...provided.droppableProps}
             className={cn(
-              "flex flex-col gap-2 rounded-lg bg-surface/50 p-2 min-h-[200px] transition-colors",
-              snapshot.isDraggingOver && "bg-surface/80 ring-2 ring-primary/10"
+              "flex flex-col gap-2 rounded-xl bg-muted/50 p-2 min-h-[200px] transition-colors border border-border/50",
+              snapshot.isDraggingOver && "bg-muted/80 ring-2 ring-primary/20"
             )}
           >
             {tasks.map((task, index) => (

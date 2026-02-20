@@ -60,7 +60,8 @@ const updateUserPreferences = async (req, res) => {
         const user = await User.findById(req.user._id);
 
         if (user) {
-            user.preferences = { ...user.preferences, ...req.body };
+            user.preferences.theme = req.body.theme || user.preferences.theme;
+            user.preferences.language = req.body.language || user.preferences.language;
             const updatedUser = await user.save();
             res.json(updatedUser.preferences);
         } else {
