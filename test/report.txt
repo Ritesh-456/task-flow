@@ -1,0 +1,43 @@
+
+-----------------------------------
+Organization Summary:
+
+Total Teams: 3
+Total Admins: 3
+Total Managers: 6
+Total Employees: 18
+Total Projects: 6
+Total Tasks: 60
+-----------------------------------
+
+Performance Summary:
+
+Top Managers:
+- Manager 1 Gamma, Rating: 9.1
+- Manager 2 Beta, Rating: 8.6
+- Manager 2 Gamma, Rating: 7.8
+
+Low Performing Users:
+- Employee 2 (M1 Beta), Rating: 4.1
+- Employee 1 (M2 Gamma), Rating: 4.3
+- Employee 2 (M1 Alpha), Rating: 4.6
+- Employee 3 (M2 Alpha), Rating: 4.6
+- Employee 2 (M2 Alpha), Rating: 4.7
+
+Available Managers:
+- Manager 1 Alpha
+- Manager 2 Alpha
+- Manager 1 Beta
+- Manager 2 Beta
+- Manager 2 Gamma
+
+Busy Managers:
+- Manager 1 Gamma
+-----------------------------------
+
+Task Summary:
+
+Completed Tasks: 16
+Pending Tasks: 44
+Overdue Tasks: 8
+-----------------------------------

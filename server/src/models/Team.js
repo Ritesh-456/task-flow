@@ -4,6 +4,16 @@ const teamSchema = mongoose.Schema(
     {
         name: { type: String, required: true },
         description: { type: String },
+        organizationId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Organization',
+            required: true
+        },
+        organizationId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Organization',
+            required: true
+        },
         createdBy: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
@@ -24,6 +34,7 @@ const teamSchema = mongoose.Schema(
     { timestamps: true }
 );
 
+teamSchema.index({ organizationId: 1 });
 teamSchema.index({ teamAdmin: 1 });
 
 

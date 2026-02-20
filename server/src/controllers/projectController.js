@@ -10,7 +10,7 @@ const User = require('../models/User');
 const getProjects = async (req, res) => {
     try {
         if (req.user.role === 'super_admin') {
-            const projects = await Project.find({})
+            const projects = await Project.find({ organizationId: req.user.organizationId })
                 .populate('owner', 'name email avatar')
                 .lean();
             return res.json(projects);
@@ -18,7 +18,7 @@ const getProjects = async (req, res) => {
 
         if (req.user.role === 'team_admin') {
             // See all in team
-            const projects = await Project.find({ teamId: req.user.teamId })
+            const projects = await Project.find({ teamId: req.user.teamId, organizationId: req.user.organizationId })
                 .populate('owner', 'name email avatar')
                 .lean();
             return res.json(projects);
@@ -26,6 +26,7 @@ const getProjects = async (req, res) => {
 
         // Manager / Employee: See if owner or member
         const projects = await Project.find({
+            organizationId: req.user.organizationId,
             $and: [
                 { teamId: req.user.teamId }, // Must be in same team
                 { $or: [{ owner: req.user._id }, { 'members.user': req.user._id }] }

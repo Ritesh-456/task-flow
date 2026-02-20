@@ -61,7 +61,7 @@ const getUsers = async (req, res) => {
         }
 
         const count = await User.countDocuments(query);
-        const users = await User.find(query)
+        const users = await User.find({ ...query, organizationId: req.user.organizationId })
             .select('-password') // Exclude password
             .limit(pageSize)
             .skip(pageSize * (page - 1))
@@ -121,7 +121,7 @@ const getProjects = async (req, res) => {
             query.teamId = req.user.teamId;
         }
 
-        const projects = await Project.find(query)
+        const projects = await Project.find({ ...query, organizationId: req.user.organizationId })
             .populate('owner', 'name email')
             .lean();
         res.json(projects);
@@ -135,7 +135,7 @@ const getProjects = async (req, res) => {
 // @access  Private/Admin
 const getActivityLogs = async (req, res) => {
     try {
-        const logs = await Activity.find({})
+        const logs = await Activity.find({ organizationId: req.user.organizationId })
             .populate('user', 'name email')
             .sort({ createdAt: -1 })
             .limit(50); // Last 50 logs
@@ -155,7 +155,7 @@ const getTasks = async (req, res) => {
             query.teamId = req.user.teamId;
         }
 
-        const tasks = await Task.find(query)
+        const tasks = await Task.find({ ...query, organizationId: req.user.organizationId })
             .populate('assignedTo', 'name email avatar')
             .populate('projectId', 'name')
             .sort({ createdAt: -1 })

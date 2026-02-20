@@ -32,7 +32,7 @@ const getPerformanceDashboard = async (req, res) => {
 
         // Parallel Execution: Fetch Users and Calculate Stats via Aggregation
         const [users, stats] = await Promise.all([
-            User.find(matchStage)
+            User.find({ ...matchStage, organizationId: req.user.organizationId })
                 .select('name email role avatar performance isAvailable lastActiveAt')
                 .lean(),
 
@@ -85,7 +85,7 @@ const getRecommendations = async (req, res) => {
         }
 
         // Use index { 'performance.rating': -1, 'performance.activeProjects': 1 }
-        const recommended = await User.find(matchQuery)
+        const recommended = await User.find({ ...matchQuery, organizationId: req.user.organizationId })
             .sort({ 'performance.rating': -1, 'performance.activeProjects': 1 })
             .limit(5)
             .select('name email role avatar performance')

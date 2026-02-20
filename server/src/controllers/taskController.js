@@ -7,7 +7,10 @@ const updatePerformance = async (userId) => {
         const user = await User.findById(userId);
         if (!user) return;
 
-        const tasks = await Task.find({ assignedTo: userId });
+        const tasks = await Task.find({
+            assignedTo: userId,
+            organizationId: req.user.organizationId
+        });
 
         const total = tasks.length;
         if (total === 0) return;
@@ -61,7 +64,10 @@ const getTasks = async (req, res) => {
         } else if (req.user.role === 'manager') {
             // See own + subordinates
             // First get subordinates
-            const subordinates = await User.find({ reportsTo: req.user._id }).select('_id');
+            const subordinates = await User.find({
+                reportsTo: req.user._id,
+                organizationId: req.user.organizationId
+            }).select('_id');
             const subordinateIds = subordinates.map(u => u._id);
             // Also include own tasks
             query.$or = [
@@ -76,7 +82,7 @@ const getTasks = async (req, res) => {
             query.teamId = req.user.teamId;
         }
 
-        const tasks = await Task.find(query)
+        const tasks = await Task.find({ ...query, organizationId: req.user.organizationId })
             .populate('assignedTo', 'name email avatar')
             .populate('createdBy', 'name')
             .populate('projectId', 'name')

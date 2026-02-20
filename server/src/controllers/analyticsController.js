@@ -134,7 +134,7 @@ const getUserProductivity = async (req, res) => {
 // @access  Private/Admin/Manager
 const getProjectProgress = async (req, res) => {
     try {
-        const projects = await Project.find({}, 'name id');
+        const projects = await Project.find({ organizationId: req.user.organizationId }, 'name id');
         const progress = await Promise.all(projects.map(async (project) => {
             const total = await Task.countDocuments({ projectId: project.id });
             const completed = await Task.countDocuments({ projectId: project.id, status: 'done' });

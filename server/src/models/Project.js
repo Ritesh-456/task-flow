@@ -4,6 +4,36 @@ const projectSchema = mongoose.Schema(
     {
         name: { type: String, required: true },
         description: { type: String },
+        organizationId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Organization',
+            required: true
+        },
+        organizationId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Organization',
+            required: true
+        },
+        organizationId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Organization',
+            required: true
+        },
+        organizationId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Organization',
+            required: true
+        },
+        organizationId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Organization',
+            required: true
+        },
+        organizationId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Organization',
+            required: true
+        },
         owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
         teamId: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' },
         members: [
@@ -17,6 +47,7 @@ const projectSchema = mongoose.Schema(
     { timestamps: true }
 );
 
+projectSchema.index({ organizationId: 1 });
 projectSchema.index({ teamId: 1 });
 projectSchema.index({ owner: 1 });
 

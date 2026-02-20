@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 
 const generateToken = (id) => {
@@ -23,24 +24,26 @@ const registerUser = async (req, res) => {
         let reportsTo = null;
         let createdBy = null;
 
+        let organizationId = null;
+
         if (inviteCode) {
             const inviter = await User.findOne({ inviteCode });
             if (!inviter) {
                 return res.status(400).json({ message: 'Invalid invite code' });
             }
 
+            organizationId = inviter.organizationId;
+
             // Hierarchy Logic
             if (inviter.role === 'super_admin') {
                 role = 'team_admin';
-                // Team Admin might not have a team yet, or Super Admin assigns them to one?
-                // For now, let's leave teamId null, they can create a team later.
             } else if (inviter.role === 'team_admin') {
                 role = 'manager';
-                teamId = inviter.teamId; // Must belong to same team
+                teamId = inviter.teamId;
                 if (!teamId) return res.status(400).json({ message: 'Inviter does not have a team yet' });
             } else if (inviter.role === 'manager') {
                 role = 'employee';
-                teamId = inviter.teamId; // Must belong to same team
+                teamId = inviter.teamId;
             } else {
                 return res.status(403).json({ message: 'This user role cannot invite members' });
             }
@@ -49,13 +52,17 @@ const registerUser = async (req, res) => {
             createdBy = inviter._id;
 
         } else {
-            // First user becomes Super Admin
-            const count = await User.countDocuments({});
-            if (count === 0) {
-                role = 'super_admin';
-            } else {
-                return res.status(400).json({ message: 'Invite code is required for registration' });
-            }
+            // New user without invite code creates a new Organization
+            role = 'super_admin';
+
+            const Organization = require('../models/Organization');
+            const newOrg = await Organization.create({
+                name: `${name}'s Organization`,
+                ownerId: new mongoose.Types.ObjectId(), // Will update after user creation
+                plan: 'Free'
+            });
+
+            organizationId = newOrg._id;
         }
 
         const user = await User.create({
@@ -66,10 +73,17 @@ const registerUser = async (req, res) => {
             teamId,
             reportsTo,
             createdBy,
-            inviteCode: null, // Generated later
+            organizationId,
+            inviteCode: null,
             preferences: {},
             security: { loginHistory: [] }
         });
+
+        // Update Org owner if it's a new org
+        if (!inviteCode && organizationId) {
+            const Organization = require('../models/Organization');
+            await Organization.findByIdAndUpdate(organizationId, { ownerId: user._id });
+        }
 
         // Add to Team members if teamId exists
         if (teamId) {
@@ -82,6 +96,7 @@ const registerUser = async (req, res) => {
             name: user.name,
             email: user.email,
             role: user.role,
+            organizationId: user.organizationId,
             teamId: user.teamId,
             avatar: user.avatar,
             token: generateToken(user._id),

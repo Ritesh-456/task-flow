@@ -22,6 +22,10 @@ const protect = async (req, res, next) => {
                 return res.status(401).json({ message: 'User account is deactivated' });
             }
 
+            if (!req.user.organizationId) {
+                return res.status(403).json({ message: 'User is not associated with any organization' });
+            }
+
             next();
         } catch (error) {
             console.error(error);

@@ -32,6 +32,7 @@ const chatWithAI = async (req, res) => {
         }).select('title status priority deadline');
 
         const projects = await Project.find({
+            organizationId: req.user.organizationId,
             $or: [{ owner: req.user._id }, { 'members.user': req.user._id }]
         }).select('name status');
 

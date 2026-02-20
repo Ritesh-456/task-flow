@@ -11,6 +11,16 @@ const userSchema = mongoose.Schema(
             enum: ['super_admin', 'team_admin', 'manager', 'employee'],
             default: 'employee'
         },
+        organizationId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Organization',
+            required: true
+        },
+        organizationId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Organization',
+            required: true
+        },
         teamId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Team'
@@ -62,6 +72,7 @@ const userSchema = mongoose.Schema(
     { timestamps: true }
 );
 
+userSchema.index({ organizationId: 1 });
 userSchema.index({ teamId: 1 });
 userSchema.index({ reportsTo: 1 });
 userSchema.index({ role: 1 });
