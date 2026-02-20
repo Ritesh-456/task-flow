@@ -8,16 +8,17 @@ const {
     addMember
 } = require('../controllers/projectController');
 const { protect } = require('../middleware/authMiddleware');
+const requireOrganization = require('../middleware/tenantMiddleware');
 
 router.route('/')
-    .get(protect, getProjects)
-    .post(protect, createProject);
+    .get(protect, requireOrganization, getProjects)
+    .post(protect, requireOrganization, createProject);
 
 router.route('/:id')
-    .put(protect, updateProject)
-    .delete(protect, deleteProject);
+    .put(protect, requireOrganization, updateProject)
+    .delete(protect, requireOrganization, deleteProject);
 
 router.route('/:id/members')
-    .post(protect, addMember);
+    .post(protect, requireOrganization, addMember);
 
 module.exports = router;

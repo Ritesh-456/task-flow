@@ -14,7 +14,7 @@ const registerUser = async (req, res) => {
     const { name, email, password, inviteCode } = req.body;
 
     try {
-        const userExists = await User.findOne({ email });
+        const userExists = await User.findOne({ email }).lean();
         if (userExists) {
             return res.status(400).json({ message: 'User already exists' });
         }
@@ -91,6 +91,15 @@ const registerUser = async (req, res) => {
             await Team.findByIdAndUpdate(teamId, { $push: { members: user._id } });
         }
 
+        const token = generateToken(user._id);
+
+        res.cookie('jwt', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+        });
+
         res.status(201).json({
             _id: user._id,
             name: user.name,
@@ -99,7 +108,6 @@ const registerUser = async (req, res) => {
             organizationId: user.organizationId,
             teamId: user.teamId,
             avatar: user.avatar,
-            token: generateToken(user._id),
         });
 
     } catch (error) {
@@ -136,6 +144,15 @@ const loginUser = async (req, res) => {
             }
             await user.save();
 
+            const token = generateToken(user._id);
+
+            res.cookie('jwt', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+            });
+
             res.json({
                 _id: user._id,
                 name: user.name,
@@ -143,7 +160,6 @@ const loginUser = async (req, res) => {
                 role: user.role,
                 avatar: user.avatar,
                 preferences: user.preferences,
-                token: generateToken(user._id),
             });
         } else {
             res.status(401).json({ message: 'Invalid email or password' });
@@ -154,4 +170,15 @@ const loginUser = async (req, res) => {
     }
 };
 
-module.exports = { registerUser, loginUser };
+// @desc    Logout user & clear cookie
+// @route   POST /api/auth/logout
+// @access  Public
+const logoutUser = (req, res) => {
+    res.cookie('jwt', '', {
+        httpOnly: true,
+        expires: new Date(0),
+    });
+    res.status(200).json({ message: 'Logged out successfully' });
+};
+
+module.exports = { registerUser, loginUser, logoutUser };

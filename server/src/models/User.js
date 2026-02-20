@@ -16,11 +16,6 @@ const userSchema = mongoose.Schema(
             ref: 'Organization',
             required: true
         },
-        organizationId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Organization',
-            required: true
-        },
         teamId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Team'
@@ -72,16 +67,12 @@ const userSchema = mongoose.Schema(
     { timestamps: true }
 );
 
-userSchema.index({ organizationId: 1 });
-userSchema.index({ teamId: 1 });
-userSchema.index({ reportsTo: 1 });
-userSchema.index({ role: 1 });
-// inviteCode has unique: true, so index is already created
-userSchema.index({ 'performance.rating': -1 });
-userSchema.index({ isAvailable: 1 });
+// Compound Indexes for fast Multi-Tenant Queries
+userSchema.index({ organizationId: 1, role: 1 });
+userSchema.index({ organizationId: 1, teamId: 1 });
+userSchema.index({ organizationId: 1, reportsTo: 1 });
+userSchema.index({ isAvailable: 1, 'performance.rating': -1 });
 userSchema.index({ teamId: 1, 'performance.rating': -1 }); // Leaderboard query
-
-
 
 userSchema.pre('save', async function (next) { // Keep next for backward compatibility or just remove it
     if (!this.isModified('password')) {

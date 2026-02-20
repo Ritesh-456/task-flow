@@ -9,31 +9,6 @@ const projectSchema = mongoose.Schema(
             ref: 'Organization',
             required: true
         },
-        organizationId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Organization',
-            required: true
-        },
-        organizationId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Organization',
-            required: true
-        },
-        organizationId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Organization',
-            required: true
-        },
-        organizationId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Organization',
-            required: true
-        },
-        organizationId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Organization',
-            required: true
-        },
         owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
         teamId: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' },
         members: [
@@ -47,9 +22,10 @@ const projectSchema = mongoose.Schema(
     { timestamps: true }
 );
 
-projectSchema.index({ organizationId: 1 });
-projectSchema.index({ teamId: 1 });
-projectSchema.index({ owner: 1 });
+// Compound Indexes for fast Multi-Tenant Queries
+projectSchema.index({ organizationId: 1, status: 1 });
+projectSchema.index({ organizationId: 1, teamId: 1 });
+projectSchema.index({ organizationId: 1, owner: 1 });
 
 
 const Project = mongoose.model('Project', projectSchema);

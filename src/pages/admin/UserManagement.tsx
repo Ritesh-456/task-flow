@@ -23,8 +23,8 @@ const UserManagement = () => {
     const fetchUsers = async () => {
         setIsLoading(true);
         try {
-            const { data } = await api.get(`/admin/users?pageNumber=${page}`);
-            setUsers(data.users);
+            const { data } = await api.get(`/admin/users?page=${page}`);
+            setUsers(data.data);
             setPage(data.page);
             setTotalPages(data.pages);
         } catch (error) {

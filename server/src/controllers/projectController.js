@@ -1,42 +1,55 @@
-const Project = require('../models/Project');
+const ProjectService = require('../services/projectService');
 const User = require('../models/User');
 
 // @desc    Get all projects (Team isolated)
 // @route   GET /api/projects
 // @access  Private
-// @desc    Get all projects (Team isolated)
-// @route   GET /api/projects
-// @access  Private
 const getProjects = async (req, res) => {
     try {
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 20;
+        const skip = (page - 1) * limit;
+        const pagination = { skip, limit };
+
+        let result;
+
         if (req.user.role === 'super_admin') {
-            const projects = await Project.find({ organizationId: req.user.organizationId })
+            result = await ProjectService.getProjectsByOrganization(req.user.organizationId, pagination);
+        } else if (req.user.role === 'team_admin') {
+            result = await ProjectService.getProjectsByTeam(req.user.teamId, req.user.organizationId, pagination);
+        } else {
+            // Manager / Employee can see projects in their team where they are members/owner
+            const projects = await Project.find({
+                organizationId: req.user.organizationId,
+                $and: [
+                    { teamId: req.user.teamId },
+                    { $or: [{ owner: req.user._id }, { 'members.user': req.user._id }] }
+                ]
+            })
+                .select('-__v')
                 .populate('owner', 'name email avatar')
+                .populate('members.user', 'name email avatar')
+                .skip(skip)
+                .limit(limit)
                 .lean();
-            return res.json(projects);
+
+            const total = await Project.countDocuments({
+                organizationId: req.user.organizationId,
+                $and: [
+                    { teamId: req.user.teamId },
+                    { $or: [{ owner: req.user._id }, { 'members.user': req.user._id }] }
+                ]
+            });
+
+            result = { data: projects, total };
         }
 
-        if (req.user.role === 'team_admin') {
-            // See all in team
-            const projects = await Project.find({ teamId: req.user.teamId, organizationId: req.user.organizationId })
-                .populate('owner', 'name email avatar')
-                .lean();
-            return res.json(projects);
-        }
-
-        // Manager / Employee: See if owner or member
-        const projects = await Project.find({
-            organizationId: req.user.organizationId,
-            $and: [
-                { teamId: req.user.teamId }, // Must be in same team
-                { $or: [{ owner: req.user._id }, { 'members.user': req.user._id }] }
-            ]
-        })
-            .populate('owner', 'name email avatar')
-            .populate('members.user', 'name email avatar')
-            .lean();
-
-        res.json(projects);
+        res.json({
+            data: result.data,
+            total: result.total,
+            page,
+            pages: Math.ceil(result.total / limit)
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

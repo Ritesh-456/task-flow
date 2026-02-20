@@ -1,17 +1,17 @@
-const Task = require('../models/Task');
-const User = require('../models/User');
+const TaskService = require('../services/taskService');
+const User = require('../models/User'); // Kept for updatePerformance helper only
 
 // Helper to update user performance
-const updatePerformance = async (userId) => {
+const updatePerformance = async (userId, organizationId) => {
     try {
         const user = await User.findById(userId);
         if (!user) return;
 
-        const tasks = await Task.find({
-            assignedTo: userId,
-            organizationId: req.user.organizationId
-        });
+        // Use Service Layer instead of raw model
+        const tasksResponse = await TaskService.getTasks({ assignedTo: userId }, organizationId, { skip: 0, limit: 1000 });
+        const tasks = tasksResponse; // Depending on how you structured TaskService returning raw array here vs obj
 
+        // ... Keep existing grading logic ...
         const total = tasks.length;
         if (total === 0) return;
 
@@ -22,8 +22,6 @@ const updatePerformance = async (userId) => {
         // Rating Formula: (Completed / Total) * 10 - (Overdue * 0.5)
         let rating = (completed / total) * 10;
         rating = rating - (overdue * 0.5);
-
-        // Clamp rating
         rating = Math.max(1.0, Math.min(10.0, rating));
 
         user.performance = {
@@ -31,14 +29,11 @@ const updatePerformance = async (userId) => {
             completedTasks: completed,
             pendingTasks: pending,
             overdueTasks: overdue,
-            activeProjects: user.performance?.activeProjects || 0, // Keep existing or update elsewhere
+            activeProjects: user.performance?.activeProjects || 0,
             lastActiveAt: new Date()
         };
 
-        // Availability Logic
-        // Available if pending < 5 (Example threshold)
         user.isAvailable = pending < 5;
-
         await user.save();
     } catch (error) {
         console.error('Error updating performance:', error);
@@ -54,41 +49,41 @@ const getTasks = async (req, res) => {
 
         // Role-based filtering
         if (req.user.role === 'super_admin') {
-            // Can see all, or filter by team if provided
             if (req.query.teamId) {
                 query.teamId = req.query.teamId;
             }
         } else if (req.user.role === 'team_admin') {
-            // See all in team
             query.teamId = req.user.teamId;
         } else if (req.user.role === 'manager') {
-            // See own + subordinates
-            // First get subordinates
             const subordinates = await User.find({
                 reportsTo: req.user._id,
                 organizationId: req.user.organizationId
             }).select('_id');
             const subordinateIds = subordinates.map(u => u._id);
-            // Also include own tasks
             query.$or = [
                 { assignedTo: { $in: [...subordinateIds, req.user._id] } },
                 { createdBy: req.user._id }
             ];
-            // Ensure strict team isolation
             query.teamId = req.user.teamId;
         } else {
-            // Employee: See own tasks only
             query.assignedTo = req.user._id;
             query.teamId = req.user.teamId;
         }
 
-        const tasks = await Task.find({ ...query, organizationId: req.user.organizationId })
-            .populate('assignedTo', 'name email avatar')
-            .populate('createdBy', 'name')
-            .populate('projectId', 'name')
-            .lean();
+        // Pagination parameters
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 20;
+        const skip = (page - 1) * limit;
 
-        res.json(tasks);
+        const tasks = await TaskService.getTasks(query, req.user.organizationId, { skip, limit });
+        const total = await TaskService.countTasks(query, req.user.organizationId);
+
+        res.json({
+            data: tasks,
+            total,
+            page,
+            pages: Math.ceil(total / limit)
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -105,23 +100,20 @@ const createTask = async (req, res) => {
             return res.status(400).json({ message: 'User must belong to a team to create tasks' });
         }
 
-        const task = await Task.create({
+        const task = await TaskService.createTask({
             title,
             description,
             projectId,
-            teamId: req.user.teamId, // Auto-assign to creator's team
+            organizationId: req.user.organizationId,
+            teamId: req.user.teamId,
             assignedTo: assignedTo || req.user._id,
-            assignedBy: req.user._id, // Add this field if needed in schema, or just infer from createdBy
             createdBy: req.user._id,
             priority,
             deadline,
             status: status || 'todo'
         });
 
-        const populatedTask = await Task.findById(task._id)
-            .populate('assignedTo', 'name email avatar')
-            .populate('projectId', 'name');
-
+        const populatedTask = await TaskService.populateTaskDetails(task._id);
         res.status(201).json(populatedTask);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -133,9 +125,9 @@ const createTask = async (req, res) => {
 // @access  Private
 const updateTask = async (req, res) => {
     try {
-        const task = await Task.findById(req.params.id);
+        const task = await TaskService.getTaskById(req.params.id);
 
-        if (!task) {
+        if (!task || task.organizationId.toString() !== req.user.organizationId.toString()) {
             return res.status(404).json({ message: 'Task not found' });
         }
 

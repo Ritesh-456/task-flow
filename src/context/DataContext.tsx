@@ -34,21 +34,16 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
             try {
                 // Fetch Users (Team Members)
-                // Note: Ideally we should use the new endpoint /users/team-members depending on role,
-                // but let's try generic /users if it exists or fallback to what we have.
-                // Actually, DataContext usually holds "all reachable users" for assignment.
-                // Let's use /users/team-members
-                const usersRes = await api.get('/users/team-members').catch(() => ({ data: [] }));
-                setUsers(usersRes.data);
+                const usersRes = await api.get('/users/team-members').catch(() => ({ data: { data: [] } }));
+                setUsers(usersRes.data.data || []);
 
                 // Fetch Tasks
-                const tasksRes = await api.get('/tasks').catch(() => ({ data: [] }));
-                setTasks(tasksRes.data);
+                const tasksRes = await api.get('/tasks').catch(() => ({ data: { data: [] } }));
+                setTasks(tasksRes.data.data || []);
 
-                // Fetch Projects (Assuming projectRoutes exist and work, likely need update)
-                // If not, we might fall back to mock or empty.
-                const projectsRes = await api.get('/projects').catch(() => ({ data: mockProjects }));
-                setProjects(projectsRes.data);
+                // Fetch Projects
+                const projectsRes = await api.get('/projects').catch(() => ({ data: { data: mockProjects } }));
+                setProjects(projectsRes.data.data || mockProjects);
 
                 // Notifications - hard to mock unless we have an endpoint
                 setNotifications(mockNotifications);

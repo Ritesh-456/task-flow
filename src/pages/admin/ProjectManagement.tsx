@@ -21,7 +21,7 @@ const ProjectManagement = () => {
         setIsLoading(true);
         try {
             const { data } = await api.get("/admin/projects");
-            setProjects(data);
+            setProjects(data.data || []);
         } catch (error) {
             toast.error("Failed to fetch projects");
         } finally {

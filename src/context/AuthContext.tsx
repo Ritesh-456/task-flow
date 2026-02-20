@@ -86,7 +86,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const logout = () => {
+    const logout = async () => {
+        try {
+            await api.post("/auth/logout");
+        } catch (e) {
+            console.error("Failed to call logout API", e);
+        }
         setUser(null);
         localStorage.removeItem("taskflow_user");
         toast.info("Logged out successfully");

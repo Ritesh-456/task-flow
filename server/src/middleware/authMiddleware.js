@@ -4,12 +4,20 @@ const User = require('../models/User');
 const protect = async (req, res, next) => {
     let token;
 
-    if (
+    // First check for HTTP-only cookie
+    if (req.cookies && req.cookies.jwt) {
+        token = req.cookies.jwt;
+    }
+    // Fallback to Bearer token if API client doesn't use cookies
+    else if (
         req.headers.authorization &&
         req.headers.authorization.startsWith('Bearer')
     ) {
+        token = req.headers.authorization.split(' ')[1];
+    }
+
+    if (token) {
         try {
-            token = req.headers.authorization.split(' ')[1];
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
             req.user = await User.findById(decoded.id).select('-password');

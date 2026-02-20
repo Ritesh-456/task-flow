@@ -7,13 +7,14 @@ const {
     deleteTask
 } = require('../controllers/taskController');
 const { protect } = require('../middleware/authMiddleware');
+const requireOrganization = require('../middleware/tenantMiddleware');
 
 router.route('/')
-    .get(protect, getTasks)
-    .post(protect, createTask);
+    .get(protect, requireOrganization, getTasks)
+    .post(protect, requireOrganization, createTask);
 
 router.route('/:id')
-    .put(protect, updateTask)
-    .delete(protect, deleteTask);
+    .put(protect, requireOrganization, updateTask)
+    .delete(protect, requireOrganization, deleteTask);
 
 module.exports = router;

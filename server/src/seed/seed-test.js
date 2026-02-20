@@ -53,13 +53,13 @@ const seedDatabase = async () => {
 
     try {
         console.log('Generating SaaS Data...');
-        const hashedPassword = await generatePassword('123456');
+        const rawPassword = '123456';
 
         // STEP 2 & 3: SUPER ADMIN & ORG
         const superAdmin = new User({
             name: "Ritesh Sharma",
             email: "superadmin@taskflow.com",
-            password: hashedPassword,
+            password: rawPassword,
             role: "super_admin",
             isActive: true,
             organizationId: new mongoose.Types.ObjectId() // temp bypass
@@ -109,7 +109,7 @@ const seedDatabase = async () => {
             const admin = await User.create({
                 name: `Admin ${team.name.split(' ')[1]}`,
                 email: `admin${i + 1}@taskflow.com`,
-                password: hashedPassword,
+                password: rawPassword,
                 role: 'team_admin',
                 organizationId: org._id,
                 teamId: team._id,
@@ -129,7 +129,7 @@ const seedDatabase = async () => {
                 const manager = await User.create({
                     name: `Manager ${j + 1} ${team.name.split(' ')[1]}`,
                     email: `manager${i + 1}_${j + 1}@taskflow.com`,
-                    password: hashedPassword,
+                    password: rawPassword,
                     role: 'manager',
                     organizationId: org._id,
                     teamId: team._id,
@@ -147,7 +147,7 @@ const seedDatabase = async () => {
                     const employee = await User.create({
                         name: `Employee ${k + 1} (M${j + 1} ${team.name.split(' ')[1]})`,
                         email: `employee${i + 1}_${j + 1}_${k + 1}@taskflow.com`,
-                        password: hashedPassword,
+                        password: rawPassword,
                         role: 'employee',
                         organizationId: org._id,
                         teamId: team._id,

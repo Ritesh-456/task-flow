@@ -24,7 +24,7 @@ const TaskMonitoring = () => {
             // In a real app, this would be /admin/tasks with filters
             // For now reusing project tasks or creating a new endpoint
             const { data } = await api.get("/admin/tasks");
-            setTasks(data);
+            setTasks(data.data || []);
         } catch (error) {
             toast.error("Failed to fetch tasks");
         } finally {

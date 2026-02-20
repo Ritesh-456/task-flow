@@ -9,11 +9,6 @@ const teamSchema = mongoose.Schema(
             ref: 'Organization',
             required: true
         },
-        organizationId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Organization',
-            required: true
-        },
         createdBy: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',

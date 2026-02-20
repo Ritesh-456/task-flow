@@ -189,15 +189,52 @@ const getSubordinates = async (req, res) => {
 // @access  Private
 const getTeamMembers = async (req, res) => {
     try {
+        // Pagination parameters
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 20;
+        const skip = (page - 1) * limit;
+
+        if (req.user.role === 'super_admin') {
+            const allOrgMembers = await User.find({ organizationId: req.user.organizationId })
+                .select('-password -__v -security')
+                .skip(skip)
+                .limit(limit)
+                .lean();
+
+            const total = await User.countDocuments({ organizationId: req.user.organizationId });
+
+            return res.json({
+                data: allOrgMembers,
+                total,
+                page,
+                pages: Math.ceil(total / limit)
+            });
+        }
+
         if (!req.user.teamId) {
             return res.status(400).json({ message: 'User is not part of a team' });
         }
 
-        const members = await User.find({ teamId: req.user.teamId })
-            .select('-password')
+        const members = await User.find({
+            teamId: req.user.teamId,
+            organizationId: req.user.organizationId
+        })
+            .select('-password -__v -security')
+            .skip(skip)
+            .limit(limit)
             .lean();
 
-        res.json(members);
+        const total = await User.countDocuments({
+            teamId: req.user.teamId,
+            organizationId: req.user.organizationId
+        });
+
+        res.json({
+            data: members,
+            total,
+            page,
+            pages: Math.ceil(total / limit)
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

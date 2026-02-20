@@ -4,25 +4,11 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
     baseURL: API_URL,
+    withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
     },
 });
-
-// Add a request interceptor to include the token
-api.interceptors.request.use(
-    (config) => {
-        const user = localStorage.getItem('taskflow_user');
-        if (user) {
-            const token = JSON.parse(user).token;
-            if (token) {
-                config.headers.Authorization = `Bearer ${token}`;
-            }
-        }
-        return config;
-    },
-    (error) => Promise.reject(error)
-);
 
 // Add a response interceptor to handle 401 errors globally
 api.interceptors.response.use(

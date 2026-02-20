@@ -115,7 +115,10 @@ const deleteUser = async (req, res) => {
 // @access  Private/Admin
 const getProjects = async (req, res) => {
     try {
-        // Simple list for now, can add pagination later
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 20;
+        const skip = (page - 1) * limit;
+
         let query = {};
         if (req.user.role !== 'super_admin' && req.user.teamId) {
             query.teamId = req.user.teamId;
@@ -123,8 +126,18 @@ const getProjects = async (req, res) => {
 
         const projects = await Project.find({ ...query, organizationId: req.user.organizationId })
             .populate('owner', 'name email')
+            .skip(skip)
+            .limit(limit)
             .lean();
-        res.json(projects);
+
+        const total = await Project.countDocuments({ ...query, organizationId: req.user.organizationId });
+
+        res.json({
+            data: projects,
+            total,
+            page,
+            pages: Math.ceil(total / limit)
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -150,6 +163,10 @@ const getActivityLogs = async (req, res) => {
 // @access  Private/Admin
 const getTasks = async (req, res) => {
     try {
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 20;
+        const skip = (page - 1) * limit;
+
         let query = {};
         if (req.user.role !== 'super_admin' && req.user.teamId) {
             query.teamId = req.user.teamId;
@@ -159,8 +176,18 @@ const getTasks = async (req, res) => {
             .populate('assignedTo', 'name email avatar')
             .populate('projectId', 'name')
             .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
             .lean();
-        res.json(tasks);
+
+        const total = await Task.countDocuments({ ...query, organizationId: req.user.organizationId });
+
+        res.json({
+            data: tasks,
+            total,
+            page,
+            pages: Math.ceil(total / limit)
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

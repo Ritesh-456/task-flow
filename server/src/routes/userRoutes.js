@@ -14,6 +14,7 @@ const {
     getTeamMembers
 } = require('../controllers/userController');
 const { protect, admin, authorize } = require('../middleware/authMiddleware');
+const requireOrganization = require('../middleware/tenantMiddleware');
 
 router.route('/profile')
     .get(protect, getUserProfile)
@@ -23,11 +24,11 @@ router.route('/preferences')
     .put(protect, updateUserPreferences);
 
 router.post('/invite', protect, authorize('super_admin', 'team_admin', 'manager'), generateInviteCode);
-router.get('/subordinates', protect, getSubordinates);
-router.get('/team-members', protect, getTeamMembers);
+router.get('/subordinates', protect, requireOrganization, getSubordinates);
+router.get('/team-members', protect, requireOrganization, getTeamMembers);
 
 router.route('/')
-    .get(protect, authorize('super_admin', 'team_admin'), getUsers); // Admin sees all, TeamAdmin sees team members (logic in controller needs update or reuse getTeamMembers)
+    .get(protect, requireOrganization, authorize('super_admin', 'team_admin'), getUsers); // Admin sees all, TeamAdmin sees team members (logic in controller needs update or reuse getTeamMembers)
 
 
 router.route('/:id')
