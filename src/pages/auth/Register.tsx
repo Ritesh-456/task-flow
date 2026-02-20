@@ -25,7 +25,7 @@ const Register = () => {
     try {
       const success = await register(name, email, password, inviteCode);
       if (success) {
-        navigate("/");
+        navigate("/dashboard");
       } else {
         setError("Registration failed. Please try again.");
       }

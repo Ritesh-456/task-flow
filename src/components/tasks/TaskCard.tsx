@@ -15,7 +15,7 @@ const TaskCard = ({ task, index }: { task: Task; index: number }) => {
   const assignee = users.find((u) => u.id === task.assignedTo);
 
   return (
-    <Draggable draggableId={task.id} index={index}>
+    <Draggable draggableId={task._id || task.id} index={index}>
       {(provided, snapshot) => (
         <div
           ref={provided.innerRef}

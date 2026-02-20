@@ -71,7 +71,7 @@ const Dashboard = () => {
               {tasks.slice(0, 5).map((task) => {
                 const assignee = users.find((u) => u.id === task.assignedTo);
                 return (
-                  <div key={task.id} className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-surface/50">
+                  <div key={task._id || task.id} className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-surface/50">
                     <div className={cn(
                       "h-2 w-2 rounded-full",
                       task.status === "done" ? "bg-success" : task.status === "in-progress" ? "bg-warning" : "bg-muted-foreground"
@@ -115,7 +115,7 @@ const Dashboard = () => {
                 // DataContext updates taskCount and completedCount.
                 const progress = project.taskCount > 0 ? Math.round((project.completedCount / project.taskCount) * 100) : 0;
                 return (
-                  <div key={project.id} className="px-5 py-4 transition-colors hover:bg-surface/50">
+                  <div key={project._id || project.id} className="px-5 py-4 transition-colors hover:bg-surface/50">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <FolderKanban className="h-4 w-4 text-primary" />

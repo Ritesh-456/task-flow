@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: FolderKanban, label: "Projects", path: "/projects" },
   { icon: CheckSquare, label: "Tasks", path: "/tasks" },
   { icon: TrendingUp, label: "Performance", path: "/performance" },

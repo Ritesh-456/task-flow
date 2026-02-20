@@ -106,7 +106,7 @@ const Projects = () => {
 
             return (
               <Link
-                key={project.id}
+                key={project._id || project.id}
                 to={`/tasks?project=${project.id}`}
                 className="group rounded-lg border border-border bg-card p-5 transition-all hover:border-primary/30 hover:shadow-md hover:shadow-primary/5"
               >
@@ -135,7 +135,7 @@ const Projects = () => {
                   <div className="flex -space-x-1.5">
                     {members.slice(0, 3).map((member) => (
                       <div
-                        key={member!.id}
+                        key={member!._id || member!.id}
                         className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-card bg-primary/20 text-[8px] font-semibold text-primary"
                         title={member!.name}
                       >

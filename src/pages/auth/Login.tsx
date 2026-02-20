@@ -21,7 +21,7 @@ const Login = () => {
     try {
       const success = await login(email, password);
       if (success) {
-        navigate("/");
+        navigate("/dashboard");
         toast.success("Welcome back!");
       } else {
         setError("Invalid credentials. Please try again.");

@@ -86,11 +86,6 @@ const App = () => (
               <Route path="/admin/projects" element={<ProtectedRoute><ProjectManagement /></ProtectedRoute>} />
               <Route path="/admin/tasks" element={<ProtectedRoute><TaskMonitoring /></ProtectedRoute>} />
               <Route path="/analytics" element={<ProtectedRoute><AnalyticsDashboard /></ProtectedRoute>} />
-
-              <Route path="/admin/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
-              <Route path="/admin/projects" element={<ProtectedRoute><ProjectManagement /></ProtectedRoute>} />
-              <Route path="/admin/tasks" element={<ProtectedRoute><TaskMonitoring /></ProtectedRoute>} />
-              <Route path="/analytics" element={<ProtectedRoute><AnalyticsDashboard /></ProtectedRoute>} />
               <Route path="/performance" element={<ProtectedRoute><PerformanceDashboard /></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
