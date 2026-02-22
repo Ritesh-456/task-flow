@@ -2,6 +2,7 @@ import { Task, TaskStatus } from "@/types";
 import TaskCard from "./TaskCard";
 import { cn } from "@/lib/utils";
 import { Droppable } from "@hello-pangea/dnd";
+import { ClipboardList } from "lucide-react";
 
 const statusConfig: Record<TaskStatus, { label: string; dotClass: string }> = {
   todo: { label: "To Do", dotClass: "bg-muted-foreground" },
@@ -38,8 +39,10 @@ const KanbanColumn = ({ status, tasks }: { status: TaskStatus; tasks: Task[] }) 
             {provided.placeholder}
 
             {tasks.length === 0 && !snapshot.isDraggingOver && (
-              <div className="flex items-center justify-center py-8 text-xs text-muted-foreground">
-                No tasks
+              <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-2 border-dashed border-border/50 rounded-lg m-2 bg-background/50">
+                <ClipboardList className="h-8 w-8 text-muted-foreground/30 mb-2" />
+                <p className="text-sm font-medium text-muted-foreground/50">No Tasks</p>
+                <p className="text-xs text-muted-foreground/40 mt-1">Drag and drop here</p>
               </div>
             )}
           </div>

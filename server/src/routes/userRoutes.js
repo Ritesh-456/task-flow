@@ -11,10 +11,13 @@ const {
 const {
     generateInviteCode,
     getSubordinates,
-    getTeamMembers
+    getTeamMembers,
+    getImpersonationTargets
 } = require('../controllers/userController');
-const { protect, admin, authorize } = require('../middleware/authMiddleware');
+const { protect, impersonateUser, admin, authorize } = require('../middleware/authMiddleware');
 const requireOrganization = require('../middleware/tenantMiddleware');
+
+router.get('/impersonation-targets', protect, getImpersonationTargets);
 
 router.route('/profile')
     .get(protect, getUserProfile)

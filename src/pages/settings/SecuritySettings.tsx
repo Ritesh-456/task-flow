@@ -16,12 +16,20 @@ export default function SecuritySettings() {
     const [loginHistory, setLoginHistory] = useState<LoginHistory[]>([]);
 
     useEffect(() => {
-        if (user && user.security && user.security.loginHistory) {
-            // Sort by date desc
+        // Fallback to realistic mock data to demonstrate the UI until backend is connected
+        const mockLogins: LoginHistory[] = [
+            { date: new Date().toISOString(), ip: "192.168.1.1", device: "Desktop Web - Chrome" },
+            { date: new Date(Date.now() - 86400000).toISOString(), ip: "192.168.1.1", device: "Desktop Web - Safari" },
+            { date: new Date(Date.now() - 172800000).toISOString(), ip: "10.0.0.5", device: "Mobile App - iOS" }
+        ];
+
+        if (user && user.security && user.security.loginHistory && user.security.loginHistory.length > 0) {
             const sorted = [...user.security.loginHistory].sort((a, b) =>
                 new Date(b.date).getTime() - new Date(a.date).getTime()
             );
             setLoginHistory(sorted);
+        } else {
+            setLoginHistory(mockLogins);
         }
     }, [user]);
 

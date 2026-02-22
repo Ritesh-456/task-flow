@@ -3,9 +3,13 @@ import { Menu } from "lucide-react";
 import Sidebar from "./Sidebar";
 import TopNav from "./TopNav";
 import AIChatAssistant from "../components/ai/AIChatAssistant";
+import ImpersonationBanner from "../components/ui/ImpersonationBanner";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
+  const { activeRole, impersonatedUser } = useAuth();
+
   // Initialize sidebar from localStorage or default
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     // Only persist for desktop, always closed by default on mobile on first load
@@ -52,7 +56,8 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   }, [isCollapsed]);
 
   return (
-    <div className="flex min-h-screen bg-background relative">
+    <div className={cn("flex min-h-screen bg-background relative", impersonatedUser ? "pt-10" : "")}>
+      <ImpersonationBanner />
       <Sidebar
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}

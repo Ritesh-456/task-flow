@@ -6,7 +6,7 @@ const {
     updateTask,
     deleteTask
 } = require('../controllers/taskController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, impersonateUser } = require('../middleware/authMiddleware');
 const requireOrganization = require('../middleware/tenantMiddleware');
 
 router.route('/')

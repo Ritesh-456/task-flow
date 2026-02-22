@@ -14,14 +14,22 @@ const analyticsCache = new LRUCache({
 // @access  Private/Admin/Manager
 const getOverviewStats = async (req, res) => {
     try {
-        const cacheKey = `overview_${req.user?.organizationId || 'global'}`;
+        const cacheKey = `overview_${req.user?.organizationId || 'global'}_${req.user?.teamId || 'all'}`;
         const cached = analyticsCache.get(cacheKey);
         if (cached) return res.json(cached);
 
-        const totalTasks = await Task.countDocuments();
-        const completedTasks = await Task.countDocuments({ status: 'done' });
-        const pendingTasks = await Task.countDocuments({ status: { $ne: 'done' } });
+        let matchQuery = {};
+        if (req.user.role === 'super_admin') {
+            matchQuery.organizationId = req.user.organizationId;
+        } else {
+            matchQuery.teamId = req.user.teamId;
+        }
+
+        const totalTasks = await Task.countDocuments(matchQuery);
+        const completedTasks = await Task.countDocuments({ ...matchQuery, status: 'done' });
+        const pendingTasks = await Task.countDocuments({ ...matchQuery, status: { $ne: 'done' } });
         const overdueTasks = await Task.countDocuments({
+            ...matchQuery,
             deadline: { $lt: new Date() },
             status: { $ne: 'done' }
         });
@@ -49,11 +57,19 @@ const getOverviewStats = async (req, res) => {
 // @access  Private/Admin/Manager
 const getTaskDistribution = async (req, res) => {
     try {
-        const cacheKey = `dist_${req.user?.organizationId || 'global'}`;
+        const cacheKey = `dist_${req.user?.organizationId || 'global'}_${req.user?.teamId || 'all'}`;
         const cached = analyticsCache.get(cacheKey);
         if (cached) return res.json(cached);
 
+        let matchQuery = {};
+        if (req.user.role === 'super_admin') {
+            matchQuery.organizationId = req.user.organizationId;
+        } else {
+            matchQuery.teamId = req.user.teamId;
+        }
+
         const distribution = await Task.aggregate([
+            { $match: matchQuery },
             {
                 $group: {
                     _id: '$status',
@@ -80,9 +96,16 @@ const getTaskDistribution = async (req, res) => {
 // @access  Private/Admin/Manager
 const getTasksOverTime = async (req, res) => {
     try {
-        const cacheKey = `time_${req.user?.organizationId || 'global'}`;
+        const cacheKey = `time_${req.user?.organizationId || 'global'}_${req.user?.teamId || 'all'}`;
         const cached = analyticsCache.get(cacheKey);
         if (cached) return res.json(cached);
+
+        let matchQuery = {};
+        if (req.user.role === 'super_admin') {
+            matchQuery.organizationId = req.user.organizationId;
+        } else {
+            matchQuery.teamId = req.user.teamId;
+        }
 
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -90,6 +113,7 @@ const getTasksOverTime = async (req, res) => {
         const tasks = await Task.aggregate([
             {
                 $match: {
+                    ...matchQuery,
                     createdAt: { $gte: sevenDaysAgo }
                 }
             },
@@ -99,6 +123,18 @@ const getTasksOverTime = async (req, res) => {
                     created: { $sum: 1 },
                     completed: {
                         $sum: { $cond: [{ $eq: ["$status", "done"] }, 1, 0] }
+                    },
+                    pending: {
+                        $sum: { $cond: [{ $ne: ["$status", "done"] }, 1, 0] }
+                    },
+                    overdue: {
+                        $sum: {
+                            $cond: [
+                                { $and: [{ $ne: ["$status", "done"] }, { $lt: ["$deadline", new Date()] }] },
+                                1,
+                                0
+                            ]
+                        }
                     }
                 }
             },
@@ -108,7 +144,9 @@ const getTasksOverTime = async (req, res) => {
         const formatted = tasks.map(t => ({
             date: t._id,
             created: t.created,
-            completed: t.completed
+            completed: t.completed,
+            pending: t.pending,
+            overdue: t.overdue
         }));
 
         analyticsCache.set(cacheKey, formatted);
@@ -123,12 +161,19 @@ const getTasksOverTime = async (req, res) => {
 // @access  Private/Admin/Manager
 const getUserProductivity = async (req, res) => {
     try {
-        const cacheKey = `prod_${req.user?.organizationId || 'global'}`;
+        const cacheKey = `prod_${req.user?.organizationId || 'global'}_${req.user?.teamId || 'all'}`;
         const cached = analyticsCache.get(cacheKey);
         if (cached) return res.json(cached);
 
+        let matchQuery = {};
+        if (req.user.role === 'super_admin') {
+            matchQuery.organizationId = req.user.organizationId;
+        } else {
+            matchQuery.teamId = req.user.teamId;
+        }
+
         const productivity = await Task.aggregate([
-            { $match: { status: 'done' } },
+            { $match: { ...matchQuery, status: 'done' } },
             {
                 $group: {
                     _id: '$assignedTo',
@@ -165,11 +210,18 @@ const getUserProductivity = async (req, res) => {
 // @access  Private/Admin/Manager
 const getProjectProgress = async (req, res) => {
     try {
-        const cacheKey = `proj_${req.user?.organizationId || 'global'}`;
+        const cacheKey = `proj_${req.user?.organizationId || 'global'}_${req.user?.teamId || 'all'}`;
         const cached = analyticsCache.get(cacheKey);
         if (cached) return res.json(cached);
 
-        const projects = await Project.find({ organizationId: req.user.organizationId }, 'name id');
+        let matchQuery = {};
+        if (req.user.role === 'super_admin') {
+            matchQuery.organizationId = req.user.organizationId;
+        } else {
+            matchQuery.teamId = req.user.teamId;
+        }
+
+        const projects = await Project.find(matchQuery, 'name id');
         const progress = await Promise.all(projects.map(async (project) => {
             const total = await Task.countDocuments({ projectId: project.id });
             const completed = await Task.countDocuments({ projectId: project.id, status: 'done' });

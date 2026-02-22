@@ -1,14 +1,15 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, FolderKanban, CheckSquare, Settings, LogOut, Zap, TrendingUp } from "lucide-react";
+import { LayoutDashboard, FolderKanban, CheckSquare, Settings, LogOut, Zap, TrendingUp, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-  { icon: FolderKanban, label: "Projects", path: "/projects" },
-  { icon: CheckSquare, label: "Tasks", path: "/tasks" },
-  { icon: TrendingUp, label: "Performance", path: "/performance" },
-  { icon: Settings, label: "Settings", path: "/settings" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", allowedRoles: ["super_admin", "team_admin", "manager", "employee"] },
+  { icon: FolderKanban, label: "Projects", path: "/projects", allowedRoles: ["super_admin", "team_admin", "manager"] },
+  { icon: CheckSquare, label: "Tasks", path: "/tasks", allowedRoles: ["super_admin", "team_admin", "manager", "employee"] },
+  { icon: TrendingUp, label: "Performance", path: "/performance", allowedRoles: ["super_admin", "team_admin"] },
+  { icon: BarChart3, label: "Analytics", path: "/analytics", allowedRoles: ["super_admin", "team_admin"] },
+  { icon: Settings, label: "Settings", path: "/settings", allowedRoles: ["super_admin", "team_admin", "manager", "employee"] },
 ];
 
 interface SidebarProps {
@@ -20,7 +21,7 @@ interface SidebarProps {
 
 const Sidebar = ({ isOpen, onToggle, isCollapsed, onToggleCollapse }: SidebarProps) => {
   const location = useLocation();
-  const { logout } = useAuth();
+  const { logout, activeRole } = useAuth();
 
   return (
     <aside
@@ -44,7 +45,7 @@ const Sidebar = ({ isOpen, onToggle, isCollapsed, onToggleCollapse }: SidebarPro
 
       {/* Navigation */}
       <nav className="flex-1 space-y-2 p-3 overflow-y-auto overflow-x-hidden">
-        {navItems.map((item) => {
+        {navItems.filter(item => item.allowedRoles.includes(activeRole)).map((item) => {
           const isActive = location.pathname === item.path;
           return (
             <div key={item.path} className="group relative z-50">

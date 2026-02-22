@@ -1,5 +1,6 @@
 const TaskService = require('../services/taskService');
 const User = require('../models/User'); // Kept for updatePerformance helper only
+const Activity = require('../models/Activity');
 
 // Helper to update user performance
 const updatePerformance = async (userId, organizationId) => {
@@ -19,10 +20,8 @@ const updatePerformance = async (userId, organizationId) => {
         const pending = tasks.filter(t => t.status !== 'done').length;
         const overdue = tasks.filter(t => t.deadline && new Date(t.deadline) < new Date() && t.status !== 'done').length;
 
-        // Rating Formula: (Completed / Total) * 10 - (Overdue * 0.5)
+        // Rating Formula: (Completed / Total) * 10
         let rating = (completed / total) * 10;
-        rating = rating - (overdue * 0.5);
-        rating = Math.max(1.0, Math.min(10.0, rating));
 
         user.performance = {
             rating: parseFloat(rating.toFixed(1)),
@@ -93,11 +92,23 @@ const getTasks = async (req, res) => {
 // @route   POST /api/tasks
 // @access  Private
 const createTask = async (req, res) => {
-    const { title, description, projectId, assignedTo, priority, deadline, status } = req.body;
+    let { title, description, projectId, assignedTo, priority, deadline, status, autoAssign } = req.body;
 
     try {
         if (!req.user.teamId && req.user.role !== 'super_admin') {
             return res.status(400).json({ message: 'User must belong to a team to create tasks' });
+        }
+
+        // Auto Assignment Logic
+        if (autoAssign === true || !assignedTo) {
+            const candidates = await User.find({
+                teamId: req.user.teamId,
+                organizationId: req.user.organizationId,
+                role: { $in: ['employee', 'manager'] }
+            }).sort({ 'performance.rating': -1, isAvailable: -1 });
+
+            const bestCandidate = candidates.find(c => c.isAvailable) || candidates[0];
+            assignedTo = bestCandidate ? bestCandidate._id : req.user._id;
         }
 
         const task = await TaskService.createTask({
@@ -106,7 +117,7 @@ const createTask = async (req, res) => {
             projectId,
             organizationId: req.user.organizationId,
             teamId: req.user.teamId,
-            assignedTo: assignedTo || req.user._id,
+            assignedTo: assignedTo,
             createdBy: req.user._id,
             priority,
             deadline,
@@ -114,6 +125,17 @@ const createTask = async (req, res) => {
         });
 
         const populatedTask = await TaskService.populateTaskDetails(task._id);
+
+        // Track Activity
+        await Activity.create({
+            user: req.user._id,
+            organizationId: req.user.organizationId,
+            action: 'created',
+            entityType: 'task',
+            entityId: task._id,
+            project: projectId
+        });
+
         res.status(201).json(populatedTask);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -136,14 +158,47 @@ const updateTask = async (req, res) => {
             return res.status(403).json({ message: 'Not authorized to update tasks from another team' });
         }
 
-        // Detailed permission could go here (e.g. employee can only update status)
+        // Detail task completion comment rule
+        const isCompleting = req.body.status === 'done' && task.status !== 'done';
+        if (isCompleting && !req.body.comment) {
+            return res.status(400).json({ message: 'A comment detailing the work done is required to complete this task.' });
+        }
+
+        const updateData = { ...req.body };
+        const updateOp = { $set: updateData };
+
+        if (req.body.comment) {
+            updateOp.$push = {
+                comments: {
+                    text: req.body.comment,
+                    userId: req.user._id
+                }
+            };
+            delete updateOp.$set.comment;
+        }
 
         const updatedTask = await Task.findByIdAndUpdate(
             req.params.id,
-            req.body,
+            updateOp,
             { new: true }
         ).populate('assignedTo', 'name email avatar')
             .populate('projectId', 'name');
+
+        if (isCompleting) {
+            // Update performance asynchronously
+            updatePerformance(updatedTask.assignedTo, updatedTask.organizationId);
+        }
+
+        // Track Activity
+        await Activity.create({
+            user: req.user._id,
+            organizationId: req.user.organizationId,
+            action: isCompleting ? 'completed' : 'updated',
+            entityType: 'task',
+            entityId: updatedTask._id,
+            project: updatedTask.projectId,
+            details: isCompleting ? { comment: req.body.comment } : { fields: Object.keys(req.body) }
+        });
 
         res.json(updatedTask);
     } catch (error) {

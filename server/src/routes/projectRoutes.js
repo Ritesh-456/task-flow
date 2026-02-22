@@ -7,7 +7,7 @@ const {
     deleteProject,
     addMember
 } = require('../controllers/projectController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, impersonateUser } = require('../middleware/authMiddleware');
 const requireOrganization = require('../middleware/tenantMiddleware');
 
 router.route('/')

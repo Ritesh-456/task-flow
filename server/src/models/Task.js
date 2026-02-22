@@ -43,7 +43,14 @@ const taskSchema = mongoose.Schema(
             ref: 'Team',
             required: true,
             index: true
-        }
+        },
+        comments: [
+            {
+                text: { type: String, required: true },
+                userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+                createdAt: { type: Date, default: Date.now }
+            }
+        ]
     },
     { timestamps: true }
 );

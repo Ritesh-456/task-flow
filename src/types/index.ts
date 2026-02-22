@@ -64,6 +64,10 @@ export interface Task {
   projectId: string;
   aiPriority?: string;
   aiRationale?: string;
+  comments?: { text: string; userId: string; createdAt: Date | string }[];
+  comment?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Notification {
@@ -74,4 +78,25 @@ export interface Notification {
   read: boolean;
   createdAt: string;
   taskId?: string;
+}
+
+export interface TaskDistributionData {
+  name: string;
+  value: number;
+}
+
+export interface TasksOverTimeData {
+  date: string;
+  created: number;
+  completed: number;
+}
+
+export interface UserProductivityData {
+  name: string;
+  completed: number;
+}
+
+export interface ProjectProgressData {
+  name: string;
+  progress: number;
 }

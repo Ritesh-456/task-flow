@@ -1,154 +1,219 @@
+import React, { useMemo } from "react";
 import AppLayout from "@/layouts/AppLayout";
-import { CheckCircle2, Clock, AlertTriangle, FolderKanban, Users, TrendingUp } from "lucide-react";
+import { CheckCircle2, Clock, AlertTriangle, FolderKanban, TrendingUp, TrendingDown, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useData } from "@/context/DataContext";
 import { useAuth } from "@/context/AuthContext";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
+  LineChart, Line, PieChart, Pie, Cell
+} from 'recharts';
+import { Button } from "@/components/ui/button";
 
 const Dashboard = () => {
-  const { tasks, projects, users } = useData();
+  const { tasks } = useData();
   const { user } = useAuth();
+
+  const metrics = useMemo(() => {
+    const now = new Date();
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const total = tasks.length;
+    const completed = tasks.filter((t) => t.status === "done").length;
+    const pending = tasks.filter((t) => t.status !== "done").length;
+
+    // Overdue logic
+    const overdue = tasks.filter((t) => {
+      if (!t.deadline || t.status === 'done') return false;
+      return new Date(t.deadline) < now;
+    }).length;
+
+    // Last week's stats for comparison
+    const lastWeekTasks = tasks.filter(t => new Date(t.createdAt || 0) <= oneWeekAgo);
+    const lastWeekCompleted = lastWeekTasks.filter(t => t.status === "done").length;
+
+    const taskGrowth = lastWeekTasks.length === 0 ? 100 : Math.round(((total - lastWeekTasks.length) / lastWeekTasks.length) * 100);
+    const compGrowth = lastWeekCompleted === 0 ? (completed > 0 ? 100 : 0) : Math.round(((completed - lastWeekCompleted) / lastWeekCompleted) * 100);
+
+    // Distribution Data for Pie Chart
+    const distMap = { "done": 0, "in-progress": 0, "todo": 0 };
+    tasks.forEach(t => distMap[t.status] = (distMap[t.status] || 0) + 1);
+    const distribution = [
+      { name: "Done", value: distMap["done"], color: "#10b981" },
+      { name: "In Progress", value: distMap["in-progress"], color: "#3b82f6" },
+      { name: "Todo", value: distMap["todo"], color: "#f59e0b" }
+    ].filter(d => d.value > 0);
+
+    // Weekly Line Data (Last 7 days)
+    const lineDataMap: Record<string, { date: string; completed: number; created: number }> = {};
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const dateStr = d.toLocaleDateString('en-US', { weekday: 'short' });
+      lineDataMap[dateStr] = { date: dateStr, completed: 0, created: 0 };
+    }
+
+    tasks.forEach(t => {
+      const createDate = new Date(t.createdAt || 0).toLocaleDateString('en-US', { weekday: 'short' });
+      if (lineDataMap[createDate]) lineDataMap[createDate].created++;
+
+      // For completion, we roughly check updated at if it's done
+      if (t.status === 'done') {
+        const compDate = new Date(t.updatedAt || t.createdAt || 0).toLocaleDateString('en-US', { weekday: 'short' });
+        if (lineDataMap[compDate]) lineDataMap[compDate].completed++;
+      }
+    });
+
+    const lineData = Object.values(lineDataMap);
+
+    return { total, completed, pending, overdue, taskGrowth, compGrowth, distribution, lineData };
+  }, [tasks]);
 
   const stats = [
     {
       label: "Total Tasks",
-      value: tasks.length,
-      icon: CheckCircle2,
+      value: metrics.total,
+      icon: FolderKanban,
       color: "text-primary bg-primary/10",
-    },
-    {
-      label: "In Progress",
-      value: tasks.filter((t) => t.status === "in-progress").length,
-      icon: Clock,
-      color: "text-warning bg-warning/10",
+      trend: metrics.taskGrowth,
+      progress: 100,
+      barColor: "bg-primary"
     },
     {
       label: "Completed",
-      value: tasks.filter((t) => t.status === "done").length,
-      icon: TrendingUp,
+      value: metrics.completed,
+      icon: CheckCircle2,
       color: "text-success bg-success/10",
+      trend: metrics.compGrowth,
+      progress: metrics.total === 0 ? 0 : (metrics.completed / metrics.total) * 100,
+      barColor: "bg-success"
     },
     {
-      label: "High Priority",
-      value: tasks.filter((t) => t.priority === "high").length,
+      label: "Pending",
+      value: metrics.pending,
+      icon: Clock,
+      color: "text-warning bg-warning/10",
+      trend: 0,
+      progress: metrics.total === 0 ? 0 : (metrics.pending / metrics.total) * 100,
+      barColor: "bg-warning"
+    },
+    {
+      label: "Overdue",
+      value: metrics.overdue,
       icon: AlertTriangle,
       color: "text-destructive bg-destructive/10",
+      trend: 0,
+      progress: metrics.total === 0 ? 0 : (metrics.overdue / metrics.total) * 100,
+      barColor: "bg-destructive"
     },
   ];
 
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Overview of your projects and tasks</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Welcome back, {user?.name}</p>
+          </div>
+          <Button variant="outline" className="flex items-center gap-2" onClick={() => window.print()}>
+            <Download className="h-4 w-4" />
+            Export Report
+          </Button>
         </div>
 
-        {/* Stats */}
+        {/* Dynamic Metric Cards with Trends and Progress Bars */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat) => (
-            <div key={stat.label} className="rounded-lg border border-border bg-card p-5 transition-colors hover:border-primary/20">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground">{stat.label}</p>
-                  <p className="mt-1 text-2xl font-bold text-foreground">{stat.value}</p>
-                </div>
+            <div key={stat.label} className="rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/30 hover:shadow-md">
+              <div className="flex items-center justify-between mb-4">
                 <div className={cn("flex h-10 w-10 items-center justify-center rounded-lg", stat.color)}>
                   <stat.icon className="h-5 w-5" />
                 </div>
+                {stat.trend !== 0 && (
+                  <div className={cn("flex items-center gap-1 text-xs font-medium rounded-full px-2 py-1",
+                    stat.trend > 0 ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive")}>
+                    {stat.trend > 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                    {Math.abs(stat.trend)}% vs last wk
+                  </div>
+                )}
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-foreground">{stat.value}</p>
+                <p className="text-sm font-medium text-muted-foreground mt-1">{stat.label}</p>
+              </div>
+              <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-secondary">
+                <div
+                  className={cn("h-full rounded-full transition-all duration-1000", stat.barColor)}
+                  style={{ width: `${stat.progress}%` }}
+                />
               </div>
             </div>
           ))}
         </div>
 
-        {/* Recent Tasks & Projects */}
+        {/* Analytics Visualizations */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Recent Tasks */}
-          <div className="rounded-lg border border-border bg-card overflow-hidden">
-            <div className="border-b border-border px-5 py-4">
-              <h2 className="text-sm font-semibold text-foreground">Recent Tasks</h2>
-            </div>
-            <div className="divide-y divide-border">
-              {tasks.slice(0, 5).map((task) => {
-                const assignee = users.find((u) => u.id === task.assignedTo);
-                return (
-                  <div key={task._id || task.id} className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-surface/50">
-                    <div className={cn(
-                      "h-2 w-2 rounded-full",
-                      task.status === "done" ? "bg-success" : task.status === "in-progress" ? "bg-warning" : "bg-muted-foreground"
-                    )} />
-                    <div className="flex-1 min-w-0">
-                      <p className="truncate text-sm font-medium text-foreground">{task.title}</p>
-                      <p className="text-xs text-muted-foreground">{projects.find(p => p.id === task.projectId)?.name}</p>
-                    </div>
-                    <span className={cn(
-                      "rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase",
-                      task.priority === "high" ? "bg-priority-high/15 text-priority-high" :
-                        task.priority === "medium" ? "bg-priority-medium/15 text-priority-medium" :
-                          "bg-priority-low/15 text-priority-low"
-                    )}>
-                      {task.priority}
-                    </span>
-                    {assignee && (
-                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-[9px] font-semibold text-primary">
-                        {assignee.avatar}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-              {tasks.length === 0 && (
-                <div className="p-8 text-center text-sm text-muted-foreground">
-                  No recent tasks
-                </div>
+
+          {/* Pie Chart: Task Distribution */}
+          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+            <h3 className="mb-6 font-semibold text-foreground">Task Distribution</h3>
+            <div className="h-[300px] w-full">
+              {metrics.distribution.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={metrics.distribution}
+                      innerRadius={70}
+                      outerRadius={100}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {metrics.distribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip
+                      contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex h-full items-center justify-center text-muted-foreground">No tasks found</div>
               )}
+            </div>
+            <div className="mt-4 flex flex-wrap justify-center gap-4">
+              {metrics.distribution.map((stat) => (
+                <div key={stat.name} className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: stat.color }} />
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {stat.name} ({stat.value})
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Projects */}
-          <div className="rounded-lg border border-border bg-card">
-            <div className="border-b border-border px-5 py-4">
-              <h2 className="text-sm font-semibold text-foreground">Active Projects</h2>
-            </div>
-            <div className="divide-y divide-border">
-              {projects.map((project) => {
-                // Calculate progress dynamically if redundant properties are not relied upon OR if we trust DataContext to update them
-                // DataContext updates taskCount and completedCount.
-                const progress = project.taskCount > 0 ? Math.round((project.completedCount / project.taskCount) * 100) : 0;
-                return (
-                  <div key={project._id || project.id} className="px-5 py-4 transition-colors hover:bg-surface/50">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <FolderKanban className="h-4 w-4 text-primary" />
-                        <h3 className="text-sm font-medium text-foreground">{project.name}</h3>
-                      </div>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Users className="h-3 w-3" />
-                        {project.members.length}
-                      </div>
-                    </div>
-                    <p className="mb-3 text-xs text-muted-foreground">{project.description}</p>
-                    <div className="flex items-center gap-3">
-                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface">
-                        <div
-                          className="h-full rounded-full bg-primary transition-all"
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
-                      <span className="text-xs font-medium text-muted-foreground">{progress}%</span>
-                    </div>
-                  </div>
-                );
-              })}
-              {projects.length === 0 && (
-                <div className="p-8 text-center text-sm text-muted-foreground">
-                  No active projects
-                </div>
-              )}
+          {/* Line Chart: Weekly Performance */}
+          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+            <h3 className="mb-6 font-semibold text-foreground">Weekly Performance</h3>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={metrics.lineData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" />
+                  <XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                  <RechartsTooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }} />
+                  <Line type="monotone" dataKey="created" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Created" />
+                  <Line type="monotone" dataKey="completed" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Completed" />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </div>
+
         </div>
       </div>
     </AppLayout>
   );
 };
+
 export default Dashboard;

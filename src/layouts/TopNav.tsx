@@ -5,13 +5,7 @@ import NotificationPanel from "../components/ui/NotificationPanel";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/services/api";
 import { toast } from "sonner";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import ImpersonationSelector from "../components/ui/ImpersonationSelector";
 
 interface TopNavProps {
   sidebarOpen: boolean;
@@ -19,7 +13,7 @@ interface TopNavProps {
 }
 
 const TopNav = ({ sidebarOpen, onToggleSidebar }: TopNavProps) => {
-  const { user, updateUser, previewRole, setPreviewRole } = useAuth();
+  const { user, updateUser, impersonatedUser } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const unreadCount = mockNotifications.filter((n) => !n.read).length;
 
@@ -31,7 +25,7 @@ const TopNav = ({ sidebarOpen, onToggleSidebar }: TopNavProps) => {
       preferences: {
         ...user?.preferences,
         theme: newTheme
-      } as any
+      }
     });
 
     try {
@@ -42,7 +36,7 @@ const TopNav = ({ sidebarOpen, onToggleSidebar }: TopNavProps) => {
         preferences: {
           ...user?.preferences,
           theme: currentTheme
-        } as any
+        }
       });
       toast.error("Failed to save theme");
     }
@@ -72,21 +66,7 @@ const TopNav = ({ sidebarOpen, onToggleSidebar }: TopNavProps) => {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {user?.role === 'super_admin' && (
-            <div className="hidden sm:block min-w-[140px]">
-              <Select value={previewRole || "super_admin"} onValueChange={(val) => setPreviewRole(val === "super_admin" ? null : val)}>
-                <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder="Preview Role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="super_admin">Super Admin View</SelectItem>
-                  <SelectItem value="team_admin">Team Admin View</SelectItem>
-                  <SelectItem value="manager">Manager View</SelectItem>
-                  <SelectItem value="employee">Employee View</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          <ImpersonationSelector />
 
           <button
             onClick={toggleTheme}
@@ -122,7 +102,7 @@ const TopNav = ({ sidebarOpen, onToggleSidebar }: TopNavProps) => {
             <div className="hidden md:block">
               <p className="text-sm font-medium text-foreground">{user?.name || 'Loading...'}</p>
               <p className="text-xs capitalize text-muted-foreground">
-                {previewRole ? `[${previewRole}]` : user?.role || 'User'}
+                {impersonatedUser ? `[${user?.role?.replace("_", " ")}] Impersonating...` : user?.role?.replace("_", " ") || 'User'}
               </p>
             </div>
           </div>

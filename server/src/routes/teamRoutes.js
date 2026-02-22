@@ -6,7 +6,7 @@ const {
     updateTeam,
     deleteTeam
 } = require('../controllers/teamController');
-const { protect, authorize } = require('../middleware/authMiddleware');
+const { protect, impersonateUser, authorize } = require('../middleware/authMiddleware');
 
 router.route('/')
     .post(protect, authorize('super_admin'), createTeam)

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Folder, CheckSquare, AlertCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/services/api";
+import { useAuth } from "@/context/AuthContext";
 
 interface SystemStats {
     users: { total: number };
@@ -17,6 +18,7 @@ interface SystemStats {
 }
 
 const AdminDashboard = () => {
+    const { activeRole } = useAuth();
     const [stats, setStats] = useState<SystemStats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -38,6 +40,20 @@ const AdminDashboard = () => {
         return (
             <SidebarLayout>
                 <div className="flex h-full items-center justify-center">Loading stats...</div>
+            </SidebarLayout>
+        );
+    }
+
+    const currentRole = activeRole || "employee";
+
+    if (!["super_admin", "team_admin"].includes(currentRole)) {
+        return (
+            <SidebarLayout>
+                <div className="flex h-full flex-col items-center justify-center space-y-4">
+                    <AlertCircle className="h-12 w-12 text-destructive" />
+                    <h2 className="text-2xl font-bold">Access Denied</h2>
+                    <p className="text-muted-foreground">You do not have permission to view this page.</p>
+                </div>
             </SidebarLayout>
         );
     }

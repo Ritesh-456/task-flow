@@ -241,6 +241,45 @@ const getTeamMembers = async (req, res) => {
     }
 };
 
+// @desc    Get users available for impersonation
+// @route   GET /api/users/impersonation-targets
+// @access  Private (Super Admin / Team Admin)
+const getImpersonationTargets = async (req, res) => {
+    try {
+        const { role } = req.query; // Optional filter string
+        const requesterRole = req.realUser?.role || req.user.role; // Use real user if already impersonating
+
+        if (!['super_admin', 'team_admin'].includes(requesterRole)) {
+            return res.status(403).json({ message: 'Not authorized for impersonation queries' });
+        }
+
+        let query = {};
+
+        // Scope to org if Team Admin
+        if (requesterRole === 'team_admin') {
+            const orgId = req.realUser?.organizationId || req.user.organizationId;
+            query.organizationId = orgId;
+            query.role = { $in: ['manager', 'employee'] }; // Can't impersonate upwards
+        }
+
+        // Apply specific requested role filter, honoring previous bounds
+        if (role && role !== 'all') {
+            if (query.role && query.role.$in) {
+                if (query.role.$in.includes(role)) query.role = role;
+                else return res.json([]); // Requested role outside bounds
+            } else {
+                query.role = role;
+            }
+        }
+
+        const targets = await User.find(query).select('_id name email role avatar teamId').limit(100);
+        res.json(targets);
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     getUserProfile,
     updateUserProfile,
@@ -250,5 +289,6 @@ module.exports = {
     updateUserRole,
     generateInviteCode,
     getSubordinates,
-    getTeamMembers
+    getTeamMembers,
+    getImpersonationTargets
 };

@@ -46,8 +46,32 @@ const queryClient = new QueryClient();
 // Simple protected route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
-  if (isLoading) return <div>Loading...</div>;
-  if (!user) return <Navigate to="/login" replace />;
+  const syncHasUser = !!localStorage.getItem("taskflow_user");
+
+  if (isLoading) {
+    if (syncHasUser) return <>{children}</>;
+    return <div>Loading...</div>;
+  }
+
+  if (!user && !syncHasUser) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+};
+
+// Role-based protected route wrapper
+const RoleProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles: string[] }) => {
+  const { user, activeRole, isLoading } = useAuth();
+  const syncHasUser = !!localStorage.getItem("taskflow_user");
+
+  if (isLoading) {
+    if (syncHasUser) return <>{children}</>;
+    return <div>Loading...</div>;
+  }
+  if (!user && !syncHasUser) return <Navigate to="/login" replace />;
+
+  if (!allowedRoles.includes(activeRole)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return <>{children}</>;
 };
 
@@ -90,12 +114,12 @@ const App = () => (
                 <Route path="/settings/projects" element={<ProtectedRoute><ProjectSettings /></ProtectedRoute>} />
 
                 {/* Admin & Analytics Routes */}
-                <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-                <Route path="/admin/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
-                <Route path="/admin/projects" element={<ProtectedRoute><ProjectManagement /></ProtectedRoute>} />
-                <Route path="/admin/tasks" element={<ProtectedRoute><TaskMonitoring /></ProtectedRoute>} />
-                <Route path="/analytics" element={<ProtectedRoute><AnalyticsDashboard /></ProtectedRoute>} />
-                <Route path="/performance" element={<ProtectedRoute><PerformanceDashboard /></ProtectedRoute>} />
+                <Route path="/admin" element={<RoleProtectedRoute allowedRoles={["super_admin", "team_admin"]}><AdminDashboard /></RoleProtectedRoute>} />
+                <Route path="/admin/users" element={<RoleProtectedRoute allowedRoles={["super_admin"]}><UserManagement /></RoleProtectedRoute>} />
+                <Route path="/admin/projects" element={<RoleProtectedRoute allowedRoles={["super_admin", "team_admin"]}><ProjectManagement /></RoleProtectedRoute>} />
+                <Route path="/admin/tasks" element={<RoleProtectedRoute allowedRoles={["super_admin", "team_admin"]}><TaskMonitoring /></RoleProtectedRoute>} />
+                <Route path="/analytics" element={<RoleProtectedRoute allowedRoles={["super_admin", "team_admin"]}><AnalyticsDashboard /></RoleProtectedRoute>} />
+                <Route path="/performance" element={<RoleProtectedRoute allowedRoles={["super_admin", "team_admin"]}><PerformanceDashboard /></RoleProtectedRoute>} />
 
                 <Route path="*" element={<NotFound />} />
               </Routes>

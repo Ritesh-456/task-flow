@@ -155,11 +155,8 @@ const loginUser = async (req, res) => {
             const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
             const device = req.headers['user-agent'];
 
-            if (!user.security) {
-                user.security = { loginHistory: [] };
-            }
-            if (!user.security.loginHistory) {
-                user.security.loginHistory = [];
+            if (!user.security || !user.security.loginHistory) {
+                user.security = { ...user.security, loginHistory: [] };
             }
 
             user.security.loginHistory.push({ ip, device });
@@ -167,6 +164,9 @@ const loginUser = async (req, res) => {
             if (user.security.loginHistory.length > 10) {
                 user.security.loginHistory.shift();
             }
+
+            user.markModified('security');
+            user.markModified('security.loginHistory');
             await user.save();
 
             const token = generateToken(user._id);

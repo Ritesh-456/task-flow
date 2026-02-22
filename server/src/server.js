@@ -12,7 +12,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: process.env.CLIENT_URL || "http://localhost:8080",
+        origin: ["http://localhost:8080", "http://localhost:8081", "http://localhost:8082", process.env.CLIENT_URL],
         methods: ["GET", "POST", "PUT", "DELETE"],
     },
 });
@@ -27,14 +27,14 @@ app.use(cookieParser());
 app.use(compression());
 app.use(helmet());
 app.use(cors({
-    origin: process.env.CLIENT_URL || "http://localhost:8080",
+    origin: ["http://localhost:8080", "http://localhost:8081", "http://localhost:8082", process.env.CLIENT_URL],
     credentials: true // Important for cookies
 }));
 
 // Apply Rate Limiting globally to API endpoints
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    max: 2000, // raised severely to allow local Vite HMR spam without 429 errors
     message: "Too many requests from this IP, please try again after 15 minutes"
 });
 app.use('/api', limiter);
