@@ -1,5 +1,9 @@
 const ProjectService = require('../services/projectService');
 const User = require('../models/User');
+const Task = require('../models/Task');
+const rbacService = require('../services/rbacService');
+const { performanceCache } = require('./performanceController');
+const { analyticsCache } = require('./analyticsController');
 
 // @desc    Get all projects (Team isolated)
 // @route   GET /api/projects
@@ -9,46 +13,24 @@ const getProjects = async (req, res) => {
         const page = parseInt(req.query.page, 10) || 1;
         const limit = parseInt(req.query.limit, 10) || 20;
         const skip = (page - 1) * limit;
-        const pagination = { skip, limit };
 
-        let result;
+        const projectQuery = await rbacService.getProjectQueryForUser(req.user);
 
-        if (req.user.role === 'super_admin') {
-            result = await ProjectService.getProjectsByOrganization(req.user.organizationId, pagination);
-        } else if (req.user.role === 'team_admin') {
-            result = await ProjectService.getProjectsByTeam(req.user.teamId, req.user.organizationId, pagination);
-        } else {
-            // Manager / Employee can see projects in their team where they are members/owner
-            const projects = await Project.find({
-                organizationId: req.user.organizationId,
-                $and: [
-                    { teamId: req.user.teamId },
-                    { $or: [{ owner: req.user._id }, { 'members.user': req.user._id }] }
-                ]
-            })
-                .select('-__v')
-                .populate('owner', 'name email avatar')
-                .populate('members.user', 'name email avatar')
-                .skip(skip)
-                .limit(limit)
-                .lean();
+        const projects = await Project.find(projectQuery)
+            .select('-__v')
+            .populate('owner', 'name email avatar')
+            .populate('members.user', 'name email avatar')
+            .skip(skip)
+            .limit(limit)
+            .lean();
 
-            const total = await Project.countDocuments({
-                organizationId: req.user.organizationId,
-                $and: [
-                    { teamId: req.user.teamId },
-                    { $or: [{ owner: req.user._id }, { 'members.user': req.user._id }] }
-                ]
-            });
-
-            result = { data: projects, total };
-        }
+        const total = await Project.countDocuments(projectQuery);
 
         res.json({
-            data: result.data,
-            total: result.total,
+            data: projects,
+            total,
             page,
-            pages: Math.ceil(result.total / limit)
+            pages: Math.ceil(total / limit)
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -62,6 +44,9 @@ const createProject = async (req, res) => {
     try {
         const { name, description, members } = req.body;
 
+        if (req.user.role === 'employee') {
+            return res.status(403).json({ message: 'Employees cannot create projects' });
+        }
         if (!req.user.teamId && req.user.role !== 'super_admin') {
             return res.status(400).json({ message: 'User must belong to a team' });
         }
@@ -71,8 +56,13 @@ const createProject = async (req, res) => {
             description,
             owner: req.user._id,
             teamId: req.user.teamId,
+            organizationId: req.user.organizationId,
             members: members || [],
         });
+
+        // Invalidate Performance & Analytics Caches
+        performanceCache.flushAll();
+        analyticsCache.clear();
 
         res.status(201).json(project);
     } catch (error) {
@@ -88,9 +78,16 @@ const updateProject = async (req, res) => {
         const project = await Project.findById(req.params.id);
 
         if (project) {
+            if (project.organizationId.toString() !== req.user.organizationId.toString()) {
+                return res.status(404).json({ message: 'Project not found' });
+            }
+
+            if (req.user.role === 'employee') {
+                return res.status(403).json({ message: 'Employees cannot update projects' });
+            }
             // Build simple permission check (Owner or Admin)
-            if (project.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-                return res.status(401).json({ message: 'Not authorized to update this project' });
+            if (project.owner.toString() !== req.user._id.toString() && !['super_admin', 'team_admin'].includes(req.user.role)) {
+                return res.status(403).json({ message: 'Not authorized to update this project' });
             }
 
             project.name = req.body.name || project.name;
@@ -98,6 +95,10 @@ const updateProject = async (req, res) => {
             project.status = req.body.status || project.status;
 
             const updatedProject = await project.save();
+            // Invalidate Performance & Analytics Caches
+            performanceCache.flushAll();
+            analyticsCache.clear();
+
             res.json(updatedProject);
         } else {
             res.status(404).json({ message: 'Project not found' });
@@ -114,10 +115,20 @@ const deleteProject = async (req, res) => {
     try {
         const project = await Project.findById(req.params.id);
         if (project) {
-            if (project.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-                return res.status(401).json({ message: 'Not authorized' });
+            if (project.organizationId.toString() !== req.user.organizationId.toString()) {
+                return res.status(404).json({ message: 'Project not found' });
+            }
+            if (req.user.role === 'employee') {
+                return res.status(403).json({ message: 'Employees cannot delete projects' });
+            }
+            if (project.owner.toString() !== req.user._id.toString() && !['super_admin', 'team_admin'].includes(req.user.role)) {
+                return res.status(403).json({ message: 'Not authorized' });
             }
             await project.deleteOne();
+            // Invalidate Performance & Analytics Caches
+            performanceCache.flushAll();
+            analyticsCache.clear();
+
             res.json({ message: 'Project removed' });
         } else {
             res.status(404).json({ message: 'Project not found' });
@@ -136,8 +147,16 @@ const addMember = async (req, res) => {
         const project = await Project.findById(req.params.id);
         const userToAdd = await User.findOne({ email });
 
-        if (!project) return res.status(404).json({ message: 'Project not found' });
-        if (!userToAdd) return res.status(404).json({ message: 'User not found' });
+        if (!project || project.organizationId.toString() !== req.user.organizationId.toString()) {
+            return res.status(404).json({ message: 'Project not found' });
+        }
+        if (!userToAdd || userToAdd.organizationId.toString() !== req.user.organizationId.toString()) {
+            return res.status(404).json({ message: 'User not found or in different organization' });
+        }
+        // Only owner or admin can add member
+        if (project.owner.toString() !== req.user._id.toString() && !['super_admin', 'team_admin'].includes(req.user.role)) {
+            return res.status(403).json({ message: 'Not authorized' });
+        }
 
         // Check if already member
         if (project.members.some(m => m.user.toString() === userToAdd._id.toString())) {

@@ -4,6 +4,7 @@ import { mockProjects, mockTasks, mockUsers, mockNotifications } from "@/data/mo
 import api from "@/services/api";
 export { api };
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 
 
 interface DataContextType {
@@ -16,6 +17,7 @@ interface DataContextType {
     updateTask: (taskId: string, updates: Partial<Task>) => void;
     deleteTask: (taskId: string) => void;
     addUser: (user: User) => void;
+    clearData: () => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -25,6 +27,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [users, setUsers] = useState<User[]>([]);
     const [notifications, setNotifications] = useState<Notification[]>([]);
+    const { activeRole } = useAuth();
 
     // Initialize data from API
     useEffect(() => {
@@ -42,8 +45,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
                 setTasks(tasksRes.data.data || []);
 
                 // Fetch Projects
-                const projectsRes = await api.get('/projects').catch(() => ({ data: { data: mockProjects } }));
-                setProjects(projectsRes.data.data || mockProjects);
+                const projectsRes = await api.get('/projects').catch(() => ({ data: { data: [] } }));
+                setProjects(projectsRes.data.data || []);
 
                 // Notifications - hard to mock unless we have an endpoint
                 setNotifications(mockNotifications);
@@ -54,7 +57,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         };
 
         loadData();
-    }, []);
+    }, [activeRole]);
 
     // Persist data? No, we sync with backend now. 
     // Remove local storage effects for data, keep for Auth only (handled in AuthContext).
@@ -107,6 +110,13 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         setUsers((prev) => [...prev, user]);
     };
 
+    const clearData = () => {
+        setProjects([]);
+        setTasks([]);
+        setUsers([]);
+        setNotifications([]);
+    };
+
     return (
         <DataContext.Provider
             value={{
@@ -119,6 +129,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
                 updateTask,
                 deleteTask,
                 addUser,
+                clearData,
             }}
         >
             {children}

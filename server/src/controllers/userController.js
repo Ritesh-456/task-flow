@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
+const rbacService = require('../services/rbacService');
 
 // @desc    Get user profile
 // @route   GET /api/users/profile
@@ -77,7 +78,8 @@ const updateUserPreferences = async (req, res) => {
 // @access  Private/Admin
 const getUsers = async (req, res) => {
     try {
-        const users = await User.find({}).select('-password');
+        const matchQuery = await rbacService.getUserQueryForUser(req.user);
+        const users = await User.find(matchQuery).select('-password');
         res.json(users);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -92,6 +94,16 @@ const deleteUser = async (req, res) => {
         const user = await User.findById(req.params.id);
 
         if (user) {
+            if (user.organizationId.toString() !== req.user.organizationId.toString()) {
+                return res.status(404).json({ message: 'User not found' });
+            }
+            if (!['super_admin', 'team_admin'].includes(req.user.role)) {
+                return res.status(403).json({ message: 'Not authorized to delete users' });
+            }
+            if (req.user.role === 'team_admin' && user.teamId?.toString() !== req.user.teamId?.toString()) {
+                return res.status(403).json({ message: 'Not authorized to delete users outside your team' });
+            }
+
             await user.deleteOne();
             res.json({ message: 'User removed' });
         } else {
@@ -110,6 +122,16 @@ const updateUserRole = async (req, res) => {
         const user = await User.findById(req.params.id);
 
         if (user) {
+            if (user.organizationId.toString() !== req.user.organizationId.toString()) {
+                return res.status(404).json({ message: 'User not found' });
+            }
+            if (!['super_admin', 'team_admin'].includes(req.user.role)) {
+                return res.status(403).json({ message: 'Not authorized to update roles' });
+            }
+            if (req.user.role === 'team_admin' && user.teamId?.toString() !== req.user.teamId?.toString()) {
+                return res.status(403).json({ message: 'Not authorized to update users outside your team' });
+            }
+
             user.role = req.body.role || user.role;
             const updatedUser = await user.save();
             res.json(updatedUser);

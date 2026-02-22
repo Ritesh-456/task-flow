@@ -12,7 +12,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: ["http://localhost:8080", "http://localhost:8081", "http://localhost:8082", process.env.CLIENT_URL],
+        origin: ["http://localhost:8080", "http://localhost:8081", "http://localhost:8082", "http://localhost:8083", "http://localhost:8084", "http://localhost:8085", process.env.CLIENT_URL],
         methods: ["GET", "POST", "PUT", "DELETE"],
     },
 });
@@ -21,13 +21,14 @@ const cookieParser = require('cookie-parser');
 const compression = require('compression');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const auditLog = require('./middleware/auditMiddleware');
 
 app.use(express.json());
 app.use(cookieParser());
 app.use(compression());
 app.use(helmet());
 app.use(cors({
-    origin: ["http://localhost:8080", "http://localhost:8081", "http://localhost:8082", process.env.CLIENT_URL],
+    origin: ["http://localhost:8080", "http://localhost:8081", "http://localhost:8082", "http://localhost:8083", "http://localhost:8084", "http://localhost:8085", process.env.CLIENT_URL],
     credentials: true // Important for cookies
 }));
 
@@ -64,6 +65,17 @@ app.use(errorHandler);
 io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
 
+    // Clients must explicitly join their authorized rooms when connecting
+    socket.on('join_rooms', (data) => {
+        if (data.organizationId) {
+            socket.join(`org_${data.organizationId}`);
+            console.log(`User ${socket.id} joined org_${data.organizationId}`);
+        }
+        if (data.teamId) {
+            socket.join(`team_${data.teamId}`);
+        }
+    });
+
     socket.on('join_project', (projectId) => {
         socket.join(projectId);
         console.log(`User ${socket.id} joined project ${projectId}`);
@@ -73,8 +85,12 @@ io.on('connection', (socket) => {
         console.log('User disconnected:', socket.id);
     });
 
-    socket.on('performance_update', (userId) => {
-        io.emit('performance_updated', userId);
+    socket.on('performance_update', ({ userId, teamId, organizationId }) => {
+        // Broadcast strictly to their Team or Organization, NEVER globally
+        const targetRoom = teamId ? `team_${teamId}` : (organizationId ? `org_${organizationId}` : null);
+        if (targetRoom) {
+            io.to(targetRoom).emit('performance_updated', userId);
+        }
     });
 });
 

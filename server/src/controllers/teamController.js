@@ -17,6 +17,7 @@ const createTeam = async (req, res) => {
         const team = await Team.create({
             name,
             description,
+            organizationId: req.user.organizationId,
             createdBy: req.user._id,
             teamAdmin: req.user._id, // Temporary, updated below if email provided
             members: [req.user._id]
@@ -53,10 +54,13 @@ const createTeam = async (req, res) => {
 const getTeams = async (req, res) => {
     try {
         if (req.user.role === 'super_admin') {
-            const teams = await Team.find({}).populate('teamAdmin', 'name email');
+            const teams = await Team.find({ organizationId: req.user.organizationId }).populate('teamAdmin', 'name email');
             res.json(teams);
         } else {
             const team = await Team.findById(req.user.teamId).populate('members', 'name email role');
+            if (team && team.organizationId.toString() !== req.user.organizationId.toString()) {
+                return res.json([]);
+            }
             res.json(team ? [team] : []);
         }
     } catch (error) {
@@ -71,7 +75,7 @@ const updateTeam = async (req, res) => {
     try {
         const team = await Team.findById(req.params.id);
 
-        if (!team) {
+        if (!team || team.organizationId.toString() !== req.user.organizationId.toString()) {
             return res.status(404).json({ message: 'Team not found' });
         }
 
@@ -97,7 +101,7 @@ const deleteTeam = async (req, res) => {
     try {
         const team = await Team.findById(req.params.id);
 
-        if (!team) {
+        if (!team || team.organizationId.toString() !== req.user.organizationId.toString()) {
             return res.status(404).json({ message: 'Team not found' });
         }
 

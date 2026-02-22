@@ -74,9 +74,9 @@ userSchema.index({ organizationId: 1, reportsTo: 1 });
 userSchema.index({ isAvailable: 1, 'performance.rating': -1 });
 userSchema.index({ teamId: 1, 'performance.rating': -1 }); // Leaderboard query
 
-userSchema.pre('save', async function (next) { // Keep next for backward compatibility or just remove it
+userSchema.pre('save', async function () {
     if (!this.isModified('password')) {
-        return; // Just return promise
+        return;
     }
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);

@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Task = require('../models/Task');
+const rbacService = require('../services/rbacService');
 const NodeCache = require('node-cache');
 
 // Cache TTL: 5 minutes (300 seconds)
@@ -19,16 +20,7 @@ const getPerformanceDashboard = async (req, res) => {
             return res.json(cachedData);
         }
 
-        let matchStage = {};
-
-        // Strict Team Isolation
-        if (req.user.role !== 'super_admin') {
-            if (req.user.teamId) {
-                matchStage.teamId = req.user.teamId;
-            } else {
-                matchStage._id = req.user._id;
-            }
-        }
+        const matchStage = await rbacService.getUserQueryForUser(req.user);
 
         // Parallel Execution: Fetch Users and Calculate Stats via Aggregation
         const [users, stats] = await Promise.all([
@@ -73,16 +65,11 @@ const getPerformanceDashboard = async (req, res) => {
 // @access  Private
 const getRecommendations = async (req, res) => {
     try {
-        let matchQuery = {
-            isAvailable: true,
-            isActive: true
-        };
+        const matchQuery = await rbacService.getUserQueryForUser(req.user);
 
-        if (req.user.role !== 'super_admin') {
-            if (req.user.teamId) {
-                matchQuery.teamId = req.user.teamId;
-            }
-        }
+        // Add recommendation specific filters
+        matchQuery.isAvailable = true;
+        matchQuery.isActive = true;
 
         // Use index { 'performance.rating': -1, 'performance.activeProjects': 1 }
         const recommended = await User.find({ ...matchQuery, organizationId: req.user.organizationId })
@@ -126,5 +113,6 @@ const updateAvailability = async (req, res) => {
 module.exports = {
     getPerformanceDashboard,
     getRecommendations,
-    updateAvailability
+    updateAvailability,
+    performanceCache
 };

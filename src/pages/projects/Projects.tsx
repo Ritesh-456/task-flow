@@ -20,7 +20,7 @@ import { toast } from "sonner";
 
 const Projects = () => {
   const { projects, users, addProject } = useData();
-  const { user } = useAuth();
+  const { user, activeRole } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectDesc, setNewProjectDesc] = useState("");
@@ -56,46 +56,48 @@ const Projects = () => {
             <p className="mt-1 text-sm text-muted-foreground">Manage and track your projects</p>
           </div>
 
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                New Project
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Create New Project</DialogTitle>
-                <DialogDescription>
-                  Add a new project to your workspace.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleCreateProject} className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <label htmlFor="name" className="text-sm font-medium">Name</label>
-                  <Input
-                    id="name"
-                    value={newProjectName}
-                    onChange={(e) => setNewProjectName(e.target.value)}
-                    placeholder="Project Name"
-                    required
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <label htmlFor="description" className="text-sm font-medium">Description</label>
-                  <Textarea
-                    id="description"
-                    value={newProjectDesc}
-                    onChange={(e) => setNewProjectDesc(e.target.value)}
-                    placeholder="Project Description"
-                  />
-                </div>
-                <DialogFooter>
-                  <Button type="submit">Create Project</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+          {activeRole !== "employee" && (
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  New Project
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Create New Project</DialogTitle>
+                  <DialogDescription>
+                    Add a new project to your workspace.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleCreateProject} className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <label htmlFor="name" className="text-sm font-medium">Name</label>
+                    <Input
+                      id="name"
+                      value={newProjectName}
+                      onChange={(e) => setNewProjectName(e.target.value)}
+                      placeholder="Project Name"
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <label htmlFor="description" className="text-sm font-medium">Description</label>
+                    <Textarea
+                      id="description"
+                      value={newProjectDesc}
+                      onChange={(e) => setNewProjectDesc(e.target.value)}
+                      placeholder="Project Description"
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button type="submit">Create Project</Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
 
         {projects.length === 0 ? (
@@ -103,10 +105,12 @@ const Projects = () => {
             <FolderKanban className="h-12 w-12 text-muted-foreground/30 mb-4" />
             <h3 className="text-lg font-medium text-foreground">No Projects Yet</h3>
             <p className="text-sm text-muted-foreground mt-2 max-w-sm">Create your first project to start organizing tasks and collaborating with your team.</p>
-            <Button onClick={() => setIsDialogOpen(true)} className="mt-6 gap-2">
-              <Plus className="h-4 w-4" />
-              Create First Project
-            </Button>
+            {activeRole !== "employee" && (
+              <Button onClick={() => setIsDialogOpen(true)} className="mt-6 gap-2">
+                <Plus className="h-4 w-4" />
+                Create First Project
+              </Button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -128,9 +132,11 @@ const Projects = () => {
                       </div>
                       <h3 className="text-sm font-semibold text-foreground">{project.name}</h3>
                     </div>
-                    <button className="rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-surface group-hover:opacity-100">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </button>
+                    {activeRole !== "employee" && (
+                      <button className="rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-surface group-hover:opacity-100">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
 
                   <p className="mb-4 line-clamp-2 text-xs text-muted-foreground">{project.description}</p>

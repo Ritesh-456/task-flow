@@ -19,9 +19,10 @@ const priorityStyles: Record<string, string> = {
 };
 
 const TaskCard = ({ task, index }: { task: Task; index: number }) => {
-  const { users, updateTask } = useData();
+  const { users, projects, updateTask } = useData();
   const { user } = useAuth();
   const assignee = users.find((u) => u.id === task.assignedTo || u._id === task.assignedTo);
+  const project = projects.find((p) => p.id === task.projectId || p._id === task.projectId);
   const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -77,6 +78,11 @@ const TaskCard = ({ task, index }: { task: Task; index: number }) => {
             )}
           </div>
           <h4 className={cn("mb-1 text-sm font-medium", task.status === 'done' ? "line-through text-muted-foreground" : "text-foreground")}>{task.title}</h4>
+          {project && (
+            <div className="mb-1.5 flex items-center text-[11px] font-medium text-primary/80">
+              <span className="mr-1 opacity-70">Project:</span> {project.name}
+            </div>
+          )}
           <p className="mb-3 line-clamp-2 text-xs text-muted-foreground">{task.description}</p>
           {task.comments && task.comments.length > 0 && (
             <div className="mb-3 flex items-center gap-1.5 text-xs text-muted-foreground">

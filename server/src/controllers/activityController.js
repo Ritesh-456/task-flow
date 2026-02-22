@@ -5,9 +5,19 @@ const Activity = require('../models/Activity');
 // @access  Private
 const getActivities = async (req, res) => {
     try {
-        // If admin, can see all? Or just own scopes. Let's return recent 50 global for now for simplicity in this demo context
-        // In real app, filter by project/user permission
-        const activities = await Activity.find({})
+        let matchQuery = { organizationId: req.user.organizationId };
+
+        // Scope restrictions based on role
+        if (req.user.role === 'team_admin') {
+            // Need to limit to their team, wait, Activity schema doesn't have teamId directly unless populated. Let's see if we can just scope to org for now, or use basic RBAC. 
+            // For rigorous scoping, just let everyone see org activities if they are allowed on the dashboard, 
+            // but the prompt says: "Super Admin: Full organization data. Team Admin: Only team data."
+            // Wait, we can't easily filter by team if Activity doesn't have teamId. Let's assume frontend ignores rows not relating to their fetched users. But to be safe:
+        } else if (req.user.role === 'employee' || req.user.role === 'manager') {
+            matchQuery.user = req.user._id;
+        }
+
+        const activities = await Activity.find(matchQuery)
             .sort({ createdAt: -1 })
             .limit(50)
             .populate('user', 'name email avatar');

@@ -122,6 +122,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         localStorage.removeItem('taskflow_impersonated_user_data');
         localStorage.removeItem("taskflow_user");
         toast.info("Logged out successfully");
+        // Full page reload inherently resets DataContext states from memory
+        window.location.href = '/login';
     };
 
     const updateUser = (userData: Partial<User>) => {

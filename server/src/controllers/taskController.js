@@ -1,6 +1,9 @@
 const TaskService = require('../services/taskService');
-const User = require('../models/User'); // Kept for updatePerformance helper only
+const User = require('../models/User');
 const Activity = require('../models/Activity');
+const rbacService = require('../services/rbacService');
+const { performanceCache } = require('./performanceController');
+const { analyticsCache } = require('./analyticsController');
 
 // Helper to update user performance
 const updatePerformance = async (userId, organizationId) => {
@@ -8,9 +11,9 @@ const updatePerformance = async (userId, organizationId) => {
         const user = await User.findById(userId);
         if (!user) return;
 
-        // Use Service Layer instead of raw model
-        const tasksResponse = await TaskService.getTasks({ assignedTo: userId }, organizationId, { skip: 0, limit: 1000 });
-        const tasks = tasksResponse; // Depending on how you structured TaskService returning raw array here vs obj
+        // Use Service Layer and RBAC for identical query mapping
+        const query = await rbacService.getTaskQueryForUser(user);
+        const tasks = await TaskService.getTasks(query, organizationId, { skip: 0, limit: 1000 });
 
         // ... Keep existing grading logic ...
         const total = tasks.length;
@@ -44,29 +47,11 @@ const updatePerformance = async (userId, organizationId) => {
 // @access  Private
 const getTasks = async (req, res) => {
     try {
-        let query = {};
+        const query = await rbacService.getTaskQueryForUser(req.user);
 
-        // Role-based filtering
-        if (req.user.role === 'super_admin') {
-            if (req.query.teamId) {
-                query.teamId = req.query.teamId;
-            }
-        } else if (req.user.role === 'team_admin') {
-            query.teamId = req.user.teamId;
-        } else if (req.user.role === 'manager') {
-            const subordinates = await User.find({
-                reportsTo: req.user._id,
-                organizationId: req.user.organizationId
-            }).select('_id');
-            const subordinateIds = subordinates.map(u => u._id);
-            query.$or = [
-                { assignedTo: { $in: [...subordinateIds, req.user._id] } },
-                { createdBy: req.user._id }
-            ];
-            query.teamId = req.user.teamId;
-        } else {
-            query.assignedTo = req.user._id;
-            query.teamId = req.user.teamId;
+        // Optionally allow clients to filter by teamId if they are Super Admin
+        if (req.user.role === 'super_admin' && req.query.teamId) {
+            query.teamId = req.query.teamId;
         }
 
         // Pagination parameters
@@ -136,6 +121,10 @@ const createTask = async (req, res) => {
             project: projectId
         });
 
+        // Invalidate Performance & Analytics Caches
+        performanceCache.flushAll();
+        analyticsCache.clear();
+
         res.status(201).json(populatedTask);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -199,6 +188,10 @@ const updateTask = async (req, res) => {
             project: updatedTask.projectId,
             details: isCompleting ? { comment: req.body.comment } : { fields: Object.keys(req.body) }
         });
+
+        // Invalidate Performance & Analytics Caches
+        performanceCache.flushAll();
+        analyticsCache.clear();
 
         res.json(updatedTask);
     } catch (error) {

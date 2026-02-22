@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const auditLog = require('./auditMiddleware');
 
 const protect = async (req, res, next) => {
     let token;
@@ -34,7 +35,8 @@ const protect = async (req, res, next) => {
                 return res.status(403).json({ message: 'User is not associated with any organization' });
             }
 
-            next();
+            // Trust the decoded backend JWT context and log it
+            return auditLog(req, res, next);
         } catch (error) {
             console.error(error);
             res.status(401).json({ message: 'Not authorized, token failed' });

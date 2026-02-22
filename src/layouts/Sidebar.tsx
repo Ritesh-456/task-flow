@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", allowedRoles: ["super_admin", "team_admin", "manager", "employee"] },
-  { icon: FolderKanban, label: "Projects", path: "/projects", allowedRoles: ["super_admin", "team_admin", "manager"] },
+  { icon: FolderKanban, label: "Projects", path: "/projects", allowedRoles: ["super_admin", "team_admin", "manager", "employee"] },
   { icon: CheckSquare, label: "Tasks", path: "/tasks", allowedRoles: ["super_admin", "team_admin", "manager", "employee"] },
   { icon: TrendingUp, label: "Performance", path: "/performance", allowedRoles: ["super_admin", "team_admin"] },
   { icon: BarChart3, label: "Analytics", path: "/analytics", allowedRoles: ["super_admin", "team_admin"] },

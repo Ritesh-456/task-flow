@@ -2,6 +2,7 @@ const Task = require('../models/Task');
 const User = require('../models/User');
 const Project = require('../models/Project');
 const { LRUCache } = require('lru-cache');
+const rbacService = require('../services/rbacService');
 
 // 5-minute cache for heavy aggregation pipelines
 const analyticsCache = new LRUCache({
@@ -14,16 +15,11 @@ const analyticsCache = new LRUCache({
 // @access  Private/Admin/Manager
 const getOverviewStats = async (req, res) => {
     try {
-        const cacheKey = `overview_${req.user?.organizationId || 'global'}_${req.user?.teamId || 'all'}`;
+        const cacheKey = `overview_${req.user?._id}_${req.user?.organizationId || 'global'}_${req.user?.teamId || 'all'}`;
         const cached = analyticsCache.get(cacheKey);
         if (cached) return res.json(cached);
 
-        let matchQuery = {};
-        if (req.user.role === 'super_admin') {
-            matchQuery.organizationId = req.user.organizationId;
-        } else {
-            matchQuery.teamId = req.user.teamId;
-        }
+        const matchQuery = await rbacService.getTaskQueryForUser(req.user);
 
         const totalTasks = await Task.countDocuments(matchQuery);
         const completedTasks = await Task.countDocuments({ ...matchQuery, status: 'done' });
@@ -57,16 +53,11 @@ const getOverviewStats = async (req, res) => {
 // @access  Private/Admin/Manager
 const getTaskDistribution = async (req, res) => {
     try {
-        const cacheKey = `dist_${req.user?.organizationId || 'global'}_${req.user?.teamId || 'all'}`;
+        const cacheKey = `dist_${req.user?._id}_${req.user?.organizationId || 'global'}_${req.user?.teamId || 'all'}`;
         const cached = analyticsCache.get(cacheKey);
         if (cached) return res.json(cached);
 
-        let matchQuery = {};
-        if (req.user.role === 'super_admin') {
-            matchQuery.organizationId = req.user.organizationId;
-        } else {
-            matchQuery.teamId = req.user.teamId;
-        }
+        const matchQuery = await rbacService.getTaskQueryForUser(req.user);
 
         const distribution = await Task.aggregate([
             { $match: matchQuery },
@@ -96,16 +87,11 @@ const getTaskDistribution = async (req, res) => {
 // @access  Private/Admin/Manager
 const getTasksOverTime = async (req, res) => {
     try {
-        const cacheKey = `time_${req.user?.organizationId || 'global'}_${req.user?.teamId || 'all'}`;
+        const cacheKey = `time_${req.user?._id}_${req.user?.organizationId || 'global'}_${req.user?.teamId || 'all'}`;
         const cached = analyticsCache.get(cacheKey);
         if (cached) return res.json(cached);
 
-        let matchQuery = {};
-        if (req.user.role === 'super_admin') {
-            matchQuery.organizationId = req.user.organizationId;
-        } else {
-            matchQuery.teamId = req.user.teamId;
-        }
+        const matchQuery = await rbacService.getTaskQueryForUser(req.user);
 
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -161,16 +147,11 @@ const getTasksOverTime = async (req, res) => {
 // @access  Private/Admin/Manager
 const getUserProductivity = async (req, res) => {
     try {
-        const cacheKey = `prod_${req.user?.organizationId || 'global'}_${req.user?.teamId || 'all'}`;
+        const cacheKey = `prod_${req.user?._id}_${req.user?.organizationId || 'global'}_${req.user?.teamId || 'all'}`;
         const cached = analyticsCache.get(cacheKey);
         if (cached) return res.json(cached);
 
-        let matchQuery = {};
-        if (req.user.role === 'super_admin') {
-            matchQuery.organizationId = req.user.organizationId;
-        } else {
-            matchQuery.teamId = req.user.teamId;
-        }
+        const matchQuery = await rbacService.getTaskQueryForUser(req.user);
 
         const productivity = await Task.aggregate([
             { $match: { ...matchQuery, status: 'done' } },
@@ -210,21 +191,18 @@ const getUserProductivity = async (req, res) => {
 // @access  Private/Admin/Manager
 const getProjectProgress = async (req, res) => {
     try {
-        const cacheKey = `proj_${req.user?.organizationId || 'global'}_${req.user?.teamId || 'all'}`;
+        const cacheKey = `proj_${req.user?._id}_${req.user?.organizationId || 'global'}_${req.user?.teamId || 'all'}`;
         const cached = analyticsCache.get(cacheKey);
         if (cached) return res.json(cached);
 
-        let matchQuery = {};
-        if (req.user.role === 'super_admin') {
-            matchQuery.organizationId = req.user.organizationId;
-        } else {
-            matchQuery.teamId = req.user.teamId;
-        }
+        const projectQuery = await rbacService.getProjectQueryForUser(req.user);
 
-        const projects = await Project.find(matchQuery, 'name id');
+        const taskQuery = await rbacService.getTaskQueryForUser(req.user);
+
+        const projects = await Project.find(projectQuery, 'name id');
         const progress = await Promise.all(projects.map(async (project) => {
-            const total = await Task.countDocuments({ projectId: project.id });
-            const completed = await Task.countDocuments({ projectId: project.id, status: 'done' });
+            const total = await Task.countDocuments({ ...taskQuery, projectId: project.id });
+            const completed = await Task.countDocuments({ ...taskQuery, projectId: project.id, status: 'done' });
             return {
                 name: project.name,
                 progress: total > 0 ? Math.round((completed / total) * 100) : 0
@@ -243,5 +221,6 @@ module.exports = {
     getTaskDistribution,
     getTasksOverTime,
     getUserProductivity,
-    getProjectProgress
+    getProjectProgress,
+    analyticsCache
 };
