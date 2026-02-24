@@ -10,9 +10,12 @@ const organizationSchema = mongoose.Schema(
         },
         plan: {
             type: String,
-            enum: ['Free', 'Basic', 'Pro', 'Enterprise'],
-            default: 'Free'
+            enum: ['FREE', 'BASIC', 'PRO', 'ENTERPRISE'],
+            default: 'FREE'
         },
+        registrationNumber: { type: String },
+        companySize: { type: String },
+        industry: { type: String },
         isActive: { type: Boolean, default: true }
     },
     { timestamps: true }

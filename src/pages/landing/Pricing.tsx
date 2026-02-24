@@ -20,7 +20,7 @@ const plans = [
             "Email support"
         ],
         cta: "Get Started",
-        ctaLink: "/signup"
+        ctaLink: "/super-admin-signup"
     },
     {
         name: "Pro",
@@ -39,7 +39,7 @@ const plans = [
             "Priority email support"
         ],
         cta: "Get Started",
-        ctaLink: "/signup"
+        ctaLink: "/super-admin-signup"
     },
     {
         name: "Enterprise",

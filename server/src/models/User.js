@@ -62,7 +62,16 @@ const userSchema = mongoose.Schema(
             activeProjects: { type: Number, default: 0 },
             lastActiveAt: { type: Date, default: Date.now }
         },
-        isAvailable: { type: Boolean, default: true }
+        isAvailable: { type: Boolean, default: true },
+        plan: {
+            type: String,
+            enum: ['FREE', 'BASIC', 'PRO', 'ENTERPRISE'],
+            default: 'FREE'
+        },
+        isPaid: { type: Boolean, default: false },
+        phoneNumber: { type: String },
+        industry: { type: String },
+        country: { type: String }
     },
     { timestamps: true }
 );

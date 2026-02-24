@@ -13,6 +13,8 @@ const Projects = lazy(() => import("./pages/projects/Projects"));
 const TaskBoard = lazy(() => import("./pages/tasks/TaskBoard"));
 const Login = lazy(() => import("./pages/auth/Login"));
 const Register = lazy(() => import("./pages/auth/Register"));
+const SuperAdminSignup = lazy(() => import("./pages/auth/SuperAdminSignup"));
+const Payment = lazy(() => import("./pages/auth/Payment"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Lazy load Settings Pages
@@ -97,6 +99,8 @@ const App = () => (
                 <Route path="/" element={<LandingHome />} />
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/contact" element={<Contact />} />
+                <Route path="/super-admin-signup" element={<SuperAdminSignup />} />
+                <Route path="/payment" element={<Payment />} />
 
                 {/* Protected Routes */}
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

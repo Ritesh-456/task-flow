@@ -76,6 +76,11 @@ const PricingCard = ({
                     : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                     }`}
                 variant={highlighted ? "default" : "outline"}
+                onClick={() => {
+                    if (ctaLink === "/super-admin-signup") {
+                        localStorage.setItem("selectedPlan", name.toUpperCase());
+                    }
+                }}
             >
                 <Link to={ctaLink}>
                     {cta}

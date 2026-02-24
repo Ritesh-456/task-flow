@@ -1,9 +1,11 @@
+const Project = require('../models/Project');
 const ProjectService = require('../services/projectService');
 const User = require('../models/User');
 const Task = require('../models/Task');
 const rbacService = require('../services/rbacService');
 const { performanceCache } = require('./performanceController');
 const { analyticsCache } = require('./analyticsController');
+
 
 // @desc    Get all projects (Team isolated)
 // @route   GET /api/projects

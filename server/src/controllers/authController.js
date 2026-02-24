@@ -14,6 +14,10 @@ const registerUser = async (req, res) => {
     const { name, email, password, gender, role: reqRole, inviteCode } = req.body;
 
     try {
+        if (!inviteCode) {
+            return res.status(400).json({ message: 'Invite code is required for registration' });
+        }
+
         const userExists = await User.findOne({ email }).lean();
         if (userExists) {
             return res.status(400).json({ message: 'User already exists' });
@@ -25,54 +29,30 @@ const registerUser = async (req, res) => {
         let createdBy = null;
         let organizationId = null;
 
-        if (inviteCode) {
-            const inviter = await User.findOne({ inviteCode });
-            if (!inviter) {
-                return res.status(400).json({ message: 'Invalid invite code' });
-            }
-
-            organizationId = inviter.organizationId;
-
-            // Validate requested role against inviter hierarchy
-            if (inviter.role === 'super_admin' && reqRole === 'team_admin') {
-                assignedRole = reqRole;
-            } else if (inviter.role === 'team_admin' && reqRole === 'manager') {
-                assignedRole = reqRole;
-                teamId = inviter.teamId;
-                if (!teamId) return res.status(400).json({ message: 'Inviter does not have a team yet' });
-            } else if (inviter.role === 'manager' && reqRole === 'employee') {
-                assignedRole = reqRole;
-                teamId = inviter.teamId;
-            } else {
-                return res.status(403).json({ message: 'Invalid role assignment for this invite code' });
-            }
-
-            reportsTo = inviter._id;
-            createdBy = inviter._id;
-
-        } else {
-            // New user without invite code creates a new Organization as Super Admin
-            assignedRole = 'super_admin';
-
-            const Organization = require('../models/Organization');
-            const newOrg = await Organization.create({
-                name: `${name}'s Organization`,
-                ownerId: new mongoose.Types.ObjectId(), // Will update after user creation
-                plan: 'Basic'
-            });
-
-            organizationId = newOrg._id;
-
-            // Auto create Default Team for new orgs
-            const Team = require('../models/Team');
-            const newTeam = await Team.create({
-                name: "Default Team",
-                description: "Initial team created during registration",
-                organizationId: organizationId,
-                members: [] // populated down below
-            });
-            teamId = newTeam._id;
+        const inviter = await User.findOne({ inviteCode });
+        if (!inviter) {
+            return res.status(400).json({ message: 'Invalid invite code' });
         }
+
+        organizationId = inviter.organizationId;
+
+        // Validate requested role against inviter hierarchy
+        if (inviter.role === 'super_admin' && reqRole === 'team_admin') {
+            assignedRole = reqRole;
+        } else if (inviter.role === 'team_admin' && reqRole === 'manager') {
+            assignedRole = reqRole;
+            teamId = inviter.teamId;
+            if (!teamId) return res.status(400).json({ message: 'Inviter does not have a team yet' });
+        } else if (inviter.role === 'manager' && reqRole === 'employee') {
+            assignedRole = reqRole;
+            teamId = inviter.teamId;
+        } else {
+            return res.status(403).json({ message: 'Invalid role assignment for this invite code' });
+        }
+
+        reportsTo = inviter._id;
+        createdBy = inviter._id;
+
 
         // --- Avatar Generation ---
         let defaultAvatar = '';
@@ -206,4 +186,98 @@ const logoutUser = (req, res) => {
     res.status(200).json({ message: 'Logged out successfully' });
 };
 
-module.exports = { registerUser, loginUser, logoutUser };
+// @desc    Register a Super Admin (via Pricing/Onboarding)
+// @route   POST /api/auth/super-admin-register
+// @access  Public
+const superAdminRegister = async (req, res) => {
+    const { name, email, password, companyName, registrationNumber, phoneNumber, plan, gender, industry, country, avatar, companySize } = req.body;
+
+    try {
+        const userExists = await User.findOne({ email }).lean();
+        if (userExists) {
+            return res.status(400).json({ message: 'User already exists' });
+        }
+
+        // 1. Create Organization (temporary ownerId)
+        const Organization = require('../models/Organization');
+        const organization = await Organization.create({
+            name: companyName || `${name}'s Organization`,
+            ownerId: new mongoose.Types.ObjectId(), // Placeholder
+            plan: plan || 'BASIC',
+            registrationNumber,
+            companySize,
+            industry,
+            isActive: true
+        });
+
+        // 2. Generate Avatar (if not provided)
+        let finalAvatar = avatar;
+        if (!finalAvatar) {
+            const lowerGender = gender ? gender.toLowerCase() : 'male';
+            finalAvatar = `/avatars/${lowerGender}_super_admin.png`;
+        }
+
+        // 3. Create Super Admin User
+        const user = await User.create({
+            name,
+            email,
+            password,
+            role: 'super_admin',
+            organizationId: organization._id,
+            teamId: null, // update afterwards
+            plan: plan || 'BASIC',
+            isPaid: true,
+            avatar: finalAvatar,
+            phoneNumber,
+            industry,
+            country,
+            preferences: {},
+            security: { loginHistory: [] }
+        });
+
+        // 4. Create Default Team (now we have user._id)
+        const Team = require('../models/Team');
+        const team = await Team.create({
+            name: "Default Team",
+            description: "Initial team for your organization",
+            organizationId: organization._id,
+            teamAdmin: user._id,
+            createdBy: user._id,
+            members: [user._id]
+        });
+
+        // 5. Update circular refs
+        organization.ownerId = user._id;
+        await organization.save();
+
+        user.teamId = team._id;
+        await user.save();
+
+        const token = generateToken(user._id);
+
+        res.cookie('jwt', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+        });
+
+        res.status(201).json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            organizationId: user.organizationId,
+            teamId: user.teamId,
+            avatar: user.avatar,
+            plan: user.plan,
+            isPaid: user.isPaid
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { registerUser, loginUser, logoutUser, superAdminRegister };
+

@@ -11,7 +11,9 @@ interface AuthContextType {
     activeRole: string;
     login: (email: string, password: string) => Promise<boolean>;
     register: (name: string, email: string, password: string, gender: string, role: string, inviteCode?: string) => Promise<boolean>;
+    superAdminRegister: (userData: any) => Promise<boolean>;
     logout: () => void;
+
     updateUser: (userData: Partial<User>) => void;
 }
 
@@ -110,7 +112,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
+    const superAdminRegister = async (userData: any) => {
+        setIsLoading(true);
+        try {
+            const { data } = await api.post("/auth/super-admin-register", userData);
+            setUser(data);
+            setImpersonatedUser(null);
+            localStorage.removeItem('taskflow_impersonated_user');
+            localStorage.removeItem('taskflow_impersonated_user_data');
+            localStorage.setItem("taskflow_user", JSON.stringify(data));
+            toast.success("Super Admin account created successfully!");
+            return true;
+        } catch (error: any) {
+            console.error(error);
+            toast.error(error.response?.data?.message || "Super Admin registration failed");
+            return false;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const logout = async () => {
+
         try {
             await api.post("/auth/logout");
         } catch (e) {
@@ -136,7 +159,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, isLoading, impersonatedUser, setImpersonatedUser, activeRole, login, register, logout, updateUser }}>
+        <AuthContext.Provider value={{ user, isLoading, impersonatedUser, setImpersonatedUser, activeRole, login, register, superAdminRegister, logout, updateUser }}>
+
             {children}
         </AuthContext.Provider>
     );

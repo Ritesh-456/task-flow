@@ -78,19 +78,6 @@ const Register = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-foreground">Role</label>
-              <select
-                value={role}
-                onChange={e => setRole(e.target.value)}
-                className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              >
-                <option value="team_admin">Team Admin</option>
-                <option value="manager">Manager</option>
-                <option value="employee">Employee</option>
-              </select>
-            </div>
-
-            <div>
               <label className="mb-1.5 block text-sm font-medium text-foreground">Gender</label>
               <select
                 value={gender}
@@ -101,17 +88,18 @@ const Register = () => {
                 <option value="female">Female</option>
               </select>
             </div>
-          </div>
 
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-foreground">Invite Code (Optional)</label>
-            <input
-              type="text"
-              value={inviteCode}
-              onChange={(e) => setInviteCode(e.target.value)}
-              placeholder="Leave blank to create new Organization"
-              className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            />
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-foreground">Invite Code</label>
+              <input
+                type="text"
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value)}
+                placeholder="Enter invite code"
+                className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                required
+              />
+            </div>
           </div>
 
           <div>
