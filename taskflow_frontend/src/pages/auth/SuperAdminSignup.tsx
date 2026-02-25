@@ -48,6 +48,7 @@ const SuperAdminSignup = () => {
     const [plan, setPlan] = useState("");
     const [isUploading, setIsUploading] = useState(false);
     const [showMoreAvatars, setShowMoreAvatars] = useState(false);
+    const [hoveredAvatar, setHoveredAvatar] = useState<string | null>(null);
     const avatarMenuRef = useRef<HTMLDivElement>(null);
     const [countrySearch, setCountrySearch] = useState("");
     const [showCountryDropdown, setShowCountryDropdown] = useState(false);
@@ -223,19 +224,30 @@ const SuperAdminSignup = () => {
                                     </button>
 
                                     {showMoreAvatars && (
-                                        <div className="absolute top-16 right-0 w-64 h-72 bg-popover border border-border rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-2">
-                                            <div className="p-2 border-b bg-muted/50 text-[10px] uppercase font-bold text-muted-foreground tracking-wider">All Avatars</div>
-                                            <div className="overflow-y-auto flex-1 grid grid-cols-4 gap-2 p-3 custom-scrollbar">
-                                                {ALL_AVATARS.map((av, idx) => (
-                                                    <button
-                                                        key={idx}
-                                                        type="button"
-                                                        onClick={() => handleAvatarSelect(av)}
-                                                        className="h-12 w-12 rounded-lg overflow-hidden hover:scale-110 transition-transform active:scale-95"
-                                                    >
-                                                        <img src={av} alt="Avatar" className="h-full w-full object-cover" />
-                                                    </button>
-                                                ))}
+                                        <div className="absolute top-16 right-0 z-[60]">
+                                            {/* Left side hover preview */}
+                                            {hoveredAvatar && (
+                                                <div className="hidden sm:block absolute right-[103%] top-0 w-40 h-40 bg-card border-2 border-primary rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 pointer-events-none">
+                                                    <img src={hoveredAvatar} alt="Hover Preview" className="w-full h-full object-cover" />
+                                                </div>
+                                            )}
+                                            {/* Main popup */}
+                                            <div className="w-64 h-72 bg-popover border border-border rounded-xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-2">
+                                                <div className="p-2 border-b bg-muted/50 text-[10px] uppercase font-bold text-muted-foreground tracking-wider text-center">All Avatars</div>
+                                                <div className="overflow-y-auto flex-1 grid grid-cols-4 gap-2 p-3 custom-scrollbar">
+                                                    {ALL_AVATARS.map((av, idx) => (
+                                                        <button
+                                                            key={idx}
+                                                            type="button"
+                                                            onClick={() => handleAvatarSelect(av)}
+                                                            onMouseEnter={() => setHoveredAvatar(av)}
+                                                            onMouseLeave={() => setHoveredAvatar(null)}
+                                                            className="h-12 w-12 rounded-lg overflow-hidden hover:scale-110 transition-transform active:scale-95 border border-border/50 hover:border-primary"
+                                                        >
+                                                            <img src={av} alt="Avatar" className="h-full w-full object-cover" />
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             </div>
                                         </div>
                                     )}
