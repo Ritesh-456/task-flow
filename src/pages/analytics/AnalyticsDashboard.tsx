@@ -269,7 +269,7 @@ export default function AnalyticsDashboard() {
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={productivity} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                                            <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
+                                            <XAxis dataKey="firstName" stroke="hsl(var(--muted-foreground))" />
                                             <YAxis stroke="hsl(var(--muted-foreground))" />
                                             <RechartsTooltip
                                                 contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}

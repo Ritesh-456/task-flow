@@ -22,7 +22,7 @@ export default function ImpersonationSelector() {
     const [searchQuery, setSearchQuery] = useState("");
 
     // Only authorized roles can impersonate
-    if (!user || !['super_admin', 'team_admin'].includes(user.role)) return null;
+    if (!user || !['super_admin', 'admin'].includes(user.role)) return null;
 
     useEffect(() => {
         if (!isOpen) return;
@@ -56,8 +56,8 @@ export default function ImpersonationSelector() {
 
     const filteredTargets = targets.filter(t =>
         t._id !== user._id &&
-        (t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            t.email.toLowerCase().includes(searchQuery.toLowerCase()))
+        ((`${t.firstName || ''} ${t.lastName || ''}`).toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (t.email || '').toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
     return (
@@ -76,7 +76,7 @@ export default function ImpersonationSelector() {
                         </SelectTrigger>
                         <SelectContent className="z-[60]">
                             {user.role === 'super_admin' && <SelectItem value="super_admin">Super Admins</SelectItem>}
-                            {user.role === 'super_admin' && <SelectItem value="team_admin">Team Admins</SelectItem>}
+                            {user.role === 'super_admin' && <SelectItem value="admin">Admins</SelectItem>}
                             <SelectItem value="manager">Managers</SelectItem>
                             <SelectItem value="employee">Employees</SelectItem>
                         </SelectContent>
@@ -106,14 +106,17 @@ export default function ImpersonationSelector() {
                                     className="flex w-full items-center gap-3 rounded-sm p-2 text-left hover:bg-muted transition-colors"
                                 >
                                     {target.avatar ? (
-                                        <img src={target.avatar} alt={target.name} className="h-8 w-8 rounded-full object-cover" />
+                                        <img src={target.avatar} alt={`${target.firstName} ${target.lastName}`} className="h-8 w-8 rounded-full object-cover" />
                                     ) : (
                                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/20 text-xs font-semibold text-primary">
-                                            {target.name.charAt(0).toUpperCase()}
+                                            {(target.firstName?.[0] || target.email?.[0] || '?').toUpperCase()}
                                         </div>
                                     )}
                                     <div className="flex flex-col overflow-hidden">
-                                        <span className="truncate text-sm font-medium">{target.name}</span>
+                                        <span className="truncate text-sm font-medium">
+                                            {target.firstName || ''} {target.lastName || ''}
+                                            {(!target.firstName && !target.lastName) && ((target as any).name || 'Unknown User')}
+                                        </span>
                                         <span className="truncate text-xs text-muted-foreground">{target.email}</span>
                                     </div>
                                 </button>

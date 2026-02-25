@@ -77,7 +77,7 @@ export default function TeamManagement() {
         }
     };
 
-    const canInvite = ['super_admin', 'team_admin', 'manager'].includes(user?.role || '');
+    const canInvite = ['super_admin', 'admin', 'manager'].includes(user?.role || '');
 
     return (
         <SidebarLayout>
@@ -143,9 +143,9 @@ export default function TeamManagement() {
                                         <TableRow key={member._id}>
                                             <TableCell className="font-medium flex items-center gap-2">
                                                 <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs">
-                                                    {member.avatar ? <img src={member.avatar} className="rounded-full" /> : member.name.charAt(0)}
+                                                    {member.avatar ? <img src={member.avatar} className="rounded-full" /> : member.firstName?.charAt(0)}
                                                 </div>
-                                                {member.name}
+                                                {member.firstName} {member.lastName}
                                             </TableCell>
                                             <TableCell>{member.email}</TableCell>
                                             <TableCell>

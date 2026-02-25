@@ -89,7 +89,7 @@ const UserManagement = () => {
                         <TableBody>
                             {users.map((user) => (
                                 <TableRow key={user._id || user.id}>
-                                    <TableCell className="font-medium whitespace-nowrap">{user.name}</TableCell>
+                                    <TableCell className="font-medium whitespace-nowrap">{user.firstName} {user.lastName}</TableCell>
                                     <TableCell className="whitespace-nowrap">{user.email}</TableCell>
                                     <TableCell className="capitalize whitespace-nowrap">{user.role}</TableCell>
                                     <TableCell className="text-right whitespace-nowrap">

@@ -27,7 +27,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [users, setUsers] = useState<User[]>([]);
     const [notifications, setNotifications] = useState<Notification[]>([]);
-    const { activeRole } = useAuth();
+    const { activeRole, viewAsUserId } = useAuth();
 
     // Initialize data from API
     useEffect(() => {
@@ -36,16 +36,18 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             if (!token) return;
 
             try {
+                const queryParam = viewAsUserId ? `?userId=${viewAsUserId}` : '';
+
                 // Fetch Users (Team Members)
-                const usersRes = await api.get('/users/team-members').catch(() => ({ data: { data: [] } }));
+                const usersRes = await api.get(`/users/team-members${queryParam}`).catch(() => ({ data: { data: [] } }));
                 setUsers(usersRes.data.data || []);
 
                 // Fetch Tasks
-                const tasksRes = await api.get('/tasks').catch(() => ({ data: { data: [] } }));
+                const tasksRes = await api.get(`/tasks${queryParam}`).catch(() => ({ data: { data: [] } }));
                 setTasks(tasksRes.data.data || []);
 
                 // Fetch Projects
-                const projectsRes = await api.get('/projects').catch(() => ({ data: { data: [] } }));
+                const projectsRes = await api.get(`/projects${queryParam}`).catch(() => ({ data: { data: [] } }));
                 setProjects(projectsRes.data.data || []);
 
                 // Notifications - hard to mock unless we have an endpoint

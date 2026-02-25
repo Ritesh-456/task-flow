@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "manager" | "employee";
+export type UserRole = "super_admin" | "admin" | "manager" | "employee";
 export type TaskStatus = "todo" | "in-progress" | "done";
 export type TaskPriority = "low" | "medium" | "high";
 export type NotificationType = "task_assigned" | "status_updated" | "deadline_reminder";
@@ -7,12 +7,14 @@ export interface User {
   _id?: string; // MongoDB ID
   id?: string; // Kept for backward compatibility if needed, but prefer _id
   token?: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   role: UserRole | string; // Allow string to handle flexible backend responses initially
   avatar?: string;
   inviteCode?: string;
   teamId?: string;
+  tenantId?: string;
   reportsTo?: string;
   isActive?: boolean;
   createdAt?: string;
@@ -43,8 +45,9 @@ export interface Project {
   id?: string;
   name: string;
   description: string;
-  members: { user: string; role: string }[] | string[];
-  owner?: string | User;
+  members: { userId: string; role: string }[] | string[];
+  createdBy?: string | User;
+  tenantId?: string;
   status?: string;
   createdAt?: string;
   taskCount?: number;
@@ -58,13 +61,14 @@ export interface Task {
   description: string;
   status: TaskStatus;
   priority: TaskPriority;
-  deadline: string;
+  dueDate: string;
   assignedTo: string | User;
   createdBy?: string;
   projectId: string;
+  tenantId?: string;
   aiPriority?: string;
   aiRationale?: string;
-  comments?: { text: string; userId: string; createdAt: Date | string }[];
+  comments?: { message: string; userId: string; createdAt: Date | string }[];
   comment?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -92,7 +96,8 @@ export interface TasksOverTimeData {
 }
 
 export interface UserProductivityData {
-  name: string;
+  firstName: string;
+  lastName: string;
   completed: number;
 }
 

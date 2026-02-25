@@ -10,7 +10,8 @@ import { Camera } from "lucide-react";
 
 export default function ProfileSettings() {
     const { user, updateUser } = useAuth();
-    const [name, setName] = useState(user?.name || "");
+    const [firstName, setFirstName] = useState(user?.firstName || "");
+    const [lastName, setLastName] = useState(user?.lastName || "");
     const [email, setEmail] = useState(user?.email || "");
     const [isLoading, setIsLoading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -19,7 +20,7 @@ export default function ProfileSettings() {
         e.preventDefault();
         setIsLoading(true);
         try {
-            const { data } = await api.put("/users/profile", { name, email });
+            const { data } = await api.put("/users/profile", { firstName, lastName, email });
             updateUser(data);
             toast.success("Profile updated successfully");
         } catch (error: any) {
@@ -72,10 +73,10 @@ export default function ProfileSettings() {
                         <div className="relative group">
                             <div className="h-32 w-32 rounded-full overflow-hidden border-4 border-background shadow-xl">
                                 {user?.avatar ? (
-                                    <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+                                    <img src={user.avatar} alt={`${user.firstName} ${user.lastName}`} className="h-full w-full object-cover" />
                                 ) : (
                                     <div className="h-full w-full bg-primary/10 flex items-center justify-center text-4xl font-bold text-primary">
-                                        {name.charAt(0)}
+                                        {firstName?.[0] || '?'}{lastName?.[0] || ''}
                                     </div>
                                 )}
                             </div>
@@ -101,14 +102,25 @@ export default function ProfileSettings() {
 
                     <div className="flex-1 max-w-xl">
                         <form onSubmit={handleProfileUpdate} className="space-y-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="name">Full Name</Label>
-                                <Input
-                                    id="name"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    disabled={isLoading}
-                                />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="firstName">First Name</Label>
+                                    <Input
+                                        id="firstName"
+                                        value={firstName}
+                                        onChange={(e) => setFirstName(e.target.value)}
+                                        disabled={isLoading}
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="lastName">Last Name</Label>
+                                    <Input
+                                        id="lastName"
+                                        value={lastName}
+                                        onChange={(e) => setLastName(e.target.value)}
+                                        disabled={isLoading}
+                                    />
+                                </div>
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="email">Email</Label>

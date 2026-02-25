@@ -123,8 +123,8 @@ const SmartTaskInput = ({ projects, onTaskCreated }: SmartTaskInputProps) => {
                                     </div>
                                 </div>
                                 <div className="flex-1">
-                                    <label className="text-xs font-medium text-muted-foreground">Deadline</label>
-                                    <div className="mt-1 text-sm">{generatedTask.deadline || "No deadline"}</div>
+                                    <label className="text-xs font-medium text-muted-foreground">Due Date</label>
+                                    <div className="mt-1 text-sm">{generatedTask.dueDate || "No date"}</div>
                                 </div>
                             </div>
                         </div>

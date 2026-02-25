@@ -30,14 +30,9 @@ const Projects = () => {
     if (!newProjectName.trim()) return;
 
     const newProject = {
-      id: `p${Date.now()}`,
       name: newProjectName,
       description: newProjectDesc,
-      members: [user?.id || "u1"], // Default to current user
-      createdBy: user?.id || "u1",
-      createdAt: new Date().toISOString().split('T')[0],
-      taskCount: 0,
-      completedCount: 0,
+      members: [{ userId: user?._id || "", role: "admin" }],
     };
 
     addProject(newProject);
@@ -116,8 +111,11 @@ const Projects = () => {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {projects.map((project) => {
               const progress = project.taskCount > 0 ? Math.round((project.completedCount / project.taskCount) * 100) : 0;
-              // Map member IDs to user objects
-              const members = project.members.map((id) => users.find((u) => u.id === id)).filter(Boolean);
+              // Map member IDs to user objects - handles both string[] and {userId, role}[]
+              const members = (project.members || []).map((m: any) => {
+                const id = typeof m === 'string' ? m : m.userId;
+                return users.find((u) => u._id === id || u.id === id);
+              }).filter(Boolean);
 
               return (
                 <Link
@@ -154,9 +152,9 @@ const Projects = () => {
                         <div
                           key={member!._id || member!.id}
                           className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-card bg-primary/20 text-[8px] font-semibold text-primary"
-                          title={member!.name}
+                          title={`${member!.firstName} ${member!.lastName}`}
                         >
-                          {member!.name.substring(0, 2).toUpperCase()}
+                          {(member!.firstName?.[0] || '') + (member!.lastName?.[0] || '')}
                         </div>
                       ))}
                       {members.length > 3 && (

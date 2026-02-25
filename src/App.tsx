@@ -118,12 +118,12 @@ const App = () => (
                 <Route path="/settings/projects" element={<ProtectedRoute><ProjectSettings /></ProtectedRoute>} />
 
                 {/* Admin & Analytics Routes */}
-                <Route path="/admin" element={<RoleProtectedRoute allowedRoles={["super_admin", "team_admin"]}><AdminDashboard /></RoleProtectedRoute>} />
+                <Route path="/admin" element={<RoleProtectedRoute allowedRoles={["super_admin", "admin"]}><AdminDashboard /></RoleProtectedRoute>} />
                 <Route path="/admin/users" element={<RoleProtectedRoute allowedRoles={["super_admin"]}><UserManagement /></RoleProtectedRoute>} />
-                <Route path="/admin/projects" element={<RoleProtectedRoute allowedRoles={["super_admin", "team_admin"]}><ProjectManagement /></RoleProtectedRoute>} />
-                <Route path="/admin/tasks" element={<RoleProtectedRoute allowedRoles={["super_admin", "team_admin"]}><TaskMonitoring /></RoleProtectedRoute>} />
-                <Route path="/analytics" element={<RoleProtectedRoute allowedRoles={["super_admin", "team_admin"]}><AnalyticsDashboard /></RoleProtectedRoute>} />
-                <Route path="/performance" element={<RoleProtectedRoute allowedRoles={["super_admin", "team_admin"]}><PerformanceDashboard /></RoleProtectedRoute>} />
+                <Route path="/admin/projects" element={<RoleProtectedRoute allowedRoles={["super_admin", "admin"]}><ProjectManagement /></RoleProtectedRoute>} />
+                <Route path="/admin/tasks" element={<RoleProtectedRoute allowedRoles={["super_admin", "admin"]}><TaskMonitoring /></RoleProtectedRoute>} />
+                <Route path="/analytics" element={<RoleProtectedRoute allowedRoles={["super_admin", "admin"]}><AnalyticsDashboard /></RoleProtectedRoute>} />
+                <Route path="/performance" element={<RoleProtectedRoute allowedRoles={["super_admin", "admin"]}><PerformanceDashboard /></RoleProtectedRoute>} />
 
                 <Route path="*" element={<NotFound />} />
               </Routes>

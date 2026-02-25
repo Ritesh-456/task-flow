@@ -21,8 +21,8 @@ const priorityStyles: Record<string, string> = {
 const TaskCard = ({ task, index }: { task: Task; index: number }) => {
   const { users, projects, updateTask } = useData();
   const { user } = useAuth();
-  const assignee = users.find((u) => u.id === task.assignedTo || u._id === task.assignedTo);
-  const project = projects.find((p) => p.id === task.projectId || p._id === task.projectId);
+  const assignee = users.find((u) => u._id === task.assignedTo || u.id === task.assignedTo);
+  const project = projects.find((p) => p._id === task.projectId || p.id === task.projectId);
   const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -93,13 +93,17 @@ const TaskCard = ({ task, index }: { task: Task; index: number }) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Calendar className="h-3 w-3" />
-              {new Date(task.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+              {task.dueDate ? new Date(task.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : 'No date'}
             </div>
             {assignee && (
               <div className="flex items-center gap-1.5">
-                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 text-[9px] font-semibold text-primary">
-                  {assignee.avatar}
-                </div>
+                {assignee.avatar ? (
+                  <img src={assignee.avatar} alt={`${assignee.firstName}`} className="h-5 w-5 rounded-full object-cover" />
+                ) : (
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 text-[9px] font-semibold text-primary">
+                    {assignee.firstName?.[0] || '?'}{assignee.lastName?.[0] || ''}
+                  </div>
+                )}
               </div>
             )}
           </div>

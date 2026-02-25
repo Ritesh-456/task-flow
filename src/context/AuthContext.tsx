@@ -10,10 +10,12 @@ interface AuthContextType {
     setImpersonatedUser: (user: User | null) => void;
     activeRole: string;
     login: (email: string, password: string) => Promise<boolean>;
-    register: (name: string, email: string, password: string, gender: string, role: string, inviteCode?: string) => Promise<boolean>;
+    register: (firstName: string, lastName: string, email: string, password: string, gender: string, role: string, inviteCode?: string, avatar?: string) => Promise<boolean>;
     superAdminRegister: (userData: any) => Promise<boolean>;
     logout: () => void;
 
+    viewAsUserId: string | null;
+    setViewAsUserId: (id: string | null) => void;
     updateUser: (userData: Partial<User>) => void;
 }
 
@@ -23,6 +25,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [impersonatedUser, setImpersonatedUser] = useState<User | null>(null);
+    const [viewAsUserId, setViewAsUserIdState] = useState<string | null>(null);
     const activeRole = impersonatedUser?.role || user?.role || "employee";
 
     useEffect(() => {
@@ -46,10 +49,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     localStorage.removeItem("taskflow_impersonated_user");
                 }
             }
+            const storedViewAs = localStorage.getItem("taskflow_view_as_user");
+            if (storedViewAs) {
+                setViewAsUserIdState(storedViewAs);
+            }
             setIsLoading(false);
         };
         checkAuth();
     }, []);
+
+    const setViewAsUserId = (id: string | null) => {
+        if (id) {
+            localStorage.setItem("taskflow_view_as_user", id);
+        } else {
+            localStorage.removeItem("taskflow_view_as_user");
+        }
+        setViewAsUserIdState(id);
+        // Refresh the page or trigger a global data reload
+        window.location.reload();
+    };
 
     // Apply Theme
     useEffect(() => {
@@ -92,10 +110,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const register = async (name: string, email: string, password: string, gender: string, role: string, inviteCode?: string) => {
+    const register = async (firstName: string, lastName: string, email: string, password: string, gender: string, role: string, inviteCode?: string, avatar?: string) => {
         setIsLoading(true);
         try {
-            const { data } = await api.post("/auth/register", { name, email, password, gender, role, inviteCode });
+            const { data } = await api.post("/auth/register", { firstName, lastName, email, password, gender, role, inviteCode, avatar });
             setUser(data);
             setImpersonatedUser(null);
             localStorage.removeItem('taskflow_impersonated_user');
@@ -159,8 +177,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, isLoading, impersonatedUser, setImpersonatedUser, activeRole, login, register, superAdminRegister, logout, updateUser }}>
-
+        <AuthContext.Provider value={{ user, isLoading, impersonatedUser, setImpersonatedUser, activeRole, login, register, superAdminRegister, logout, updateUser, viewAsUserId, setViewAsUserId }}>
             {children}
         </AuthContext.Provider>
     );

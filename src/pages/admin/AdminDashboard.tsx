@@ -46,7 +46,7 @@ const AdminDashboard = () => {
 
     const currentRole = activeRole || "employee";
 
-    if (!["super_admin", "team_admin"].includes(currentRole)) {
+    if (!["super_admin", "admin"].includes(currentRole)) {
         return (
             <SidebarLayout>
                 <div className="flex h-full flex-col items-center justify-center space-y-4">

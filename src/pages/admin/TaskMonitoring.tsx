@@ -77,17 +77,17 @@ const TaskMonitoring = () => {
                                 <TableHead>Assigned To</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Priority</TableHead>
-                                <TableHead>Deadline</TableHead>
+                                <TableHead>Due Date</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {tasks.map((task) => (
                                 <TableRow key={task._id || task.id}>
                                     <TableCell className="font-medium">{task.title}</TableCell>
-                                    <TableCell>{(task.assignedTo as any)?.name || 'Unassigned'}</TableCell>
+                                    <TableCell>{(task.assignedTo as any)?.firstName ? `${(task.assignedTo as any).firstName} ${(task.assignedTo as any).lastName}` : 'Unassigned'}</TableCell>
                                     <TableCell>{getStatusBadge(task.status)}</TableCell>
                                     <TableCell>{getPriorityBadge(task.priority)}</TableCell>
-                                    <TableCell>{format(new Date(task.deadline), 'PP')}</TableCell>
+                                    <TableCell>{task.dueDate ? format(new Date(task.dueDate), 'PP') : 'No date'}</TableCell>
                                 </TableRow>
                             ))}
                             {!isLoading && tasks.length === 0 && (

@@ -10,11 +10,12 @@ const api = axios.create({
     },
 });
 
-// Add request interceptor for User Impersonation header
+// Add request interceptor for User Impersonation & Context Switching
 api.interceptors.request.use((config) => {
     const impersonatedId = localStorage.getItem('taskflow_impersonated_user');
-    if (impersonatedId && config.headers) {
-        config.headers['x-impersonate-user'] = impersonatedId;
+
+    if (config.headers) {
+        if (impersonatedId) config.headers['x-impersonate-user'] = impersonatedId;
     }
     return config;
 }, (error) => {

@@ -58,7 +58,11 @@ const ProjectManagement = () => {
                             {projects.map((project) => (
                                 <TableRow key={project._id || project.id}>
                                     <TableCell className="font-medium whitespace-nowrap">{project.name}</TableCell>
-                                    <TableCell className="whitespace-nowrap">{(project.owner as any)?.name || 'Unknown'}</TableCell>
+                                    <TableCell className="whitespace-nowrap">
+                                        {project.createdBy && typeof project.createdBy === 'object'
+                                            ? `${(project.createdBy as any).firstName} ${(project.createdBy as any).lastName}`
+                                            : 'Unknown'}
+                                    </TableCell>
                                     <TableCell className="capitalize whitespace-nowrap">{project.status || 'Active'}</TableCell>
                                     <TableCell className="text-right whitespace-nowrap">{project.taskCount || 0}</TableCell>
                                 </TableRow>

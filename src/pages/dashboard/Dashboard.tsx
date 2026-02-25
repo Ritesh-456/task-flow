@@ -1,9 +1,18 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import AppLayout from "@/layouts/AppLayout";
 import { CheckCircle2, Clock, AlertTriangle, FolderKanban, TrendingUp, TrendingDown, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useData } from "@/context/DataContext";
 import { useAuth } from "@/context/AuthContext";
+import api from "@/services/api";
+import { User as UserIcon, Shield } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   LineChart, Line, PieChart, Pie, Cell
@@ -12,7 +21,25 @@ import { Button } from "@/components/ui/button";
 
 const Dashboard = () => {
   const { tasks } = useData();
-  const { user } = useAuth();
+  const { user, viewAsUserId, setViewAsUserId } = useAuth();
+  const [hierarchyUsers, setHierarchyUsers] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (user && user.role === 'super_admin') {
+      const fetchHierarchy = async () => {
+        try {
+          const queryParam = viewAsUserId ? `?userId=${viewAsUserId}` : '';
+          const { data } = await api.get(`/users${queryParam}`);
+          setHierarchyUsers(data);
+        } catch (error) {
+          console.error("Failed to fetch hierarchy", error);
+        }
+      };
+      fetchHierarchy();
+    }
+  }, [user]);
+
+  const activeUser = hierarchyUsers.find(u => u._id === viewAsUserId) || user;
 
   const metrics = useMemo(() => {
     const now = new Date();
@@ -24,8 +51,8 @@ const Dashboard = () => {
 
     // Overdue logic
     const overdue = tasks.filter((t) => {
-      if (!t.deadline || t.status === 'done') return false;
-      return new Date(t.deadline) < now;
+      if (!t.dueDate || t.status === 'done') return false;
+      return new Date(t.dueDate) < now;
     }).length;
 
     // Last week's stats for comparison
@@ -113,12 +140,41 @@ const Dashboard = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Welcome back, {user?.name}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Welcome back, {user?.firstName}
+              {viewAsUserId && <span className="ml-2 text-primary font-bold">(Viewing as: {activeUser?.firstName} {activeUser?.lastName})</span>}
+            </p>
           </div>
-          <Button variant="outline" className="flex items-center gap-2" onClick={() => window.print()}>
-            <Download className="h-4 w-4" />
-            Export Report
-          </Button>
+
+          <div className="flex items-center gap-3">
+            {user?.role === 'super_admin' && (
+              <div className="flex items-center gap-2 mr-4">
+                <span className="text-xs font-bold uppercase text-muted-foreground whitespace-nowrap">View As:</span>
+                <Select
+                  value={viewAsUserId || "current_user"}
+                  onValueChange={(val) => setViewAsUserId(val === "current_user" ? null : val)}
+                >
+                  <SelectTrigger className="w-[180px] h-9 bg-card border-border">
+                    <SelectValue placeholder="Switch Context" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="current_user">Me ({user?.role})</SelectItem>
+                    {hierarchyUsers
+                      .filter(u => u._id !== user?._id)
+                      .map(u => (
+                        <SelectItem key={u._id} value={u._id}>
+                          {u.firstName} {u.lastName} ({u.role})
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <Button variant="outline" size="sm" className="flex items-center gap-2" onClick={() => window.print()}>
+              <Download className="h-4 w-4" />
+              Export Report
+            </Button>
+          </div>
         </div>
 
         {/* Dynamic Metric Cards with Trends and Progress Bars */}
@@ -151,66 +207,74 @@ const Dashboard = () => {
           ))}
         </div>
 
-        {/* Analytics Visualizations */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Analytics Visualizations - Hidden for Employees */}
+        {user?.role !== 'employee' ? (
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {/* Pie Chart: Task Distribution */}
+            <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+              <h3 className="mb-6 font-semibold text-foreground">Task Distribution</h3>
+              <div className="h-[300px] w-full">
+                {metrics.distribution.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={metrics.distribution}
+                        innerRadius={70}
+                        outerRadius={100}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {metrics.distribution.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip
+                        contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex h-full items-center justify-center text-muted-foreground">No tasks found</div>
+                )}
+              </div>
+              <div className="mt-4 flex flex-wrap justify-center gap-4">
+                {metrics.distribution.map((stat) => (
+                  <div key={stat.name} className="flex items-center gap-2">
+                    <div className="h-3 w-3 rounded-full" style={{ backgroundColor: stat.color }} />
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {stat.name} ({stat.value})
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-          {/* Pie Chart: Task Distribution */}
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-            <h3 className="mb-6 font-semibold text-foreground">Task Distribution</h3>
-            <div className="h-[300px] w-full">
-              {metrics.distribution.length > 0 ? (
+            {/* Line Chart: Weekly Performance */}
+            <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+              <h3 className="mb-6 font-semibold text-foreground">Weekly Performance</h3>
+              <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={metrics.distribution}
-                      innerRadius={70}
-                      outerRadius={100}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {metrics.distribution.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <RechartsTooltip
-                      contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
-                    />
-                  </PieChart>
+                  <LineChart data={metrics.lineData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" />
+                    <XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                    <RechartsTooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }} />
+                    <Line type="monotone" dataKey="created" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Created" />
+                    <Line type="monotone" dataKey="completed" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Completed" />
+                  </LineChart>
                 </ResponsiveContainer>
-              ) : (
-                <div className="flex h-full items-center justify-center text-muted-foreground">No tasks found</div>
-              )}
-            </div>
-            <div className="mt-4 flex flex-wrap justify-center gap-4">
-              {metrics.distribution.map((stat) => (
-                <div key={stat.name} className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: stat.color }} />
-                  <span className="text-sm font-medium text-muted-foreground">
-                    {stat.name} ({stat.value})
-                  </span>
-                </div>
-              ))}
+              </div>
             </div>
           </div>
-
-          {/* Line Chart: Weekly Performance */}
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-            <h3 className="mb-6 font-semibold text-foreground">Weekly Performance</h3>
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={metrics.lineData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" />
-                  <XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                  <RechartsTooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }} />
-                  <Line type="monotone" dataKey="created" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Created" />
-                  <Line type="monotone" dataKey="completed" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Completed" />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+        ) : (
+          <div className="rounded-xl border border-border bg-primary/5 p-8 text-center">
+            <Shield className="h-12 w-12 text-primary mx-auto mb-4 opacity-50" />
+            <h3 className="text-lg font-bold text-foreground">Personal Focus Mode</h3>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto mt-2">
+              You are currently in personal focus mode. Detailed organization analytics are reserved for team leads and administrators.
+            </p>
           </div>
-
-        </div>
+        )}
       </div>
     </AppLayout>
   );

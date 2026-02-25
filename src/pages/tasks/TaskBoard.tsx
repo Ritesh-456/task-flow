@@ -40,7 +40,7 @@ const TaskBoard = () => {
   const [newTaskPriority, setNewTaskPriority] = useState<TaskPriority>("medium");
   const [newTaskAssignee, setNewTaskAssignee] = useState<string>("");
   const [newTaskProject, setNewTaskProject] = useState<string>(projectFilter || "");
-  const [newTaskDeadline, setNewTaskDeadline] = useState("");
+  const [newTaskDueDate, setNewTaskDueDate] = useState("");
 
   let filteredTasks = projectFilter
     ? tasks.filter((t) => t.projectId === projectFilter)
@@ -87,9 +87,9 @@ const TaskBoard = () => {
       description: newTaskDesc,
       status: "todo" as TaskStatus,
       priority: newTaskPriority,
-      deadline: newTaskDeadline || new Date().toISOString().split('T')[0],
-      assignedTo: newTaskAssignee || user?.id || "u1",
-      createdBy: user?.id || "u1",
+      dueDate: newTaskDueDate || new Date().toISOString().split('T')[0],
+      assignedTo: newTaskAssignee || user?._id || "u1",
+      createdBy: user?._id || "u1",
       projectId: newTaskProject || (projects[0]?.id || ""),
     };
 
@@ -192,14 +192,14 @@ const TaskBoard = () => {
                         </SelectTrigger>
                         <SelectContent>
                           {users.map(u => (
-                            <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                            <SelectItem key={u._id || u.id} value={(u._id || u.id)!}>{u.firstName} {u.lastName}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="grid gap-2">
-                      <label className="text-sm font-medium">Deadline</label>
-                      <Input type="date" value={newTaskDeadline} onChange={(e) => setNewTaskDeadline(e.target.value)} />
+                      <label className="text-sm font-medium">Due Date</label>
+                      <Input type="date" value={newTaskDueDate} onChange={(e) => setNewTaskDueDate(e.target.value)} />
                     </div>
                   </div>
 

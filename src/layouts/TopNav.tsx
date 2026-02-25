@@ -91,16 +91,16 @@ const TopNav = ({ sidebarOpen, onToggleSidebar }: TopNavProps) => {
             {user?.avatar ? (
               <img
                 src={user.avatar}
-                alt={user.name}
+                alt={`${user.firstName} ${user.lastName}`}
                 className="h-8 w-8 rounded-full object-cover ring-2 ring-primary/20"
               />
             ) : (
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-                {user?.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : '??'}
+                {user?.firstName ? `${user.firstName[0]}${user.lastName?.[0] || ''}`.toUpperCase() : '??'}
               </div>
             )}
             <div className="hidden md:block">
-              <p className="text-sm font-medium text-foreground">{user?.name || 'Loading...'}</p>
+              <p className="text-sm font-medium text-foreground">{user?.firstName ? `${user.firstName} ${user.lastName}` : 'Loading...'}</p>
               <p className="text-xs capitalize text-muted-foreground">
                 {impersonatedUser ? `[${user?.role?.replace("_", " ")}] Impersonating...` : user?.role?.replace("_", " ") || 'User'}
               </p>
