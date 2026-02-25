@@ -79,3 +79,75 @@ class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
             return Task.objects.filter(assigned_to=user)
             
         return Task.objects.none()
+
+class DashboardMetricsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def _get_allowed_users_for(self, request_user, view_as_id=None):
+        """
+        Returns a queryset of users the current request_user is allowed to see data for.
+        If view_as_id is passed, it validates the request_user can view that user,
+        and returns only that user.
+        """
+        user_qs = User.objects.none()
+
+        if request_user.role == 'super_admin':
+            user_qs = User.objects.all()
+        elif request_user.role == 'admin':
+            subordinates = User.objects.filter(reports_to=request_user)
+            sub_subordinates = User.objects.filter(reports_to__in=subordinates)
+            user_qs = User.objects.filter(id__in=list(subordinates.values_list('id', flat=True)) + list(sub_subordinates.values_list('id', flat=True)) + [request_user.id])
+        elif request_user.role == 'manager':
+            employees = User.objects.filter(reports_to=request_user)
+            user_qs = User.objects.filter(id__in=list(employees.values_list('id', flat=True)) + [request_user.id])
+        elif request_user.role == 'employee':
+            user_qs = User.objects.filter(id=request_user.id)
+            
+        if view_as_id:
+            # Validate the requested view_as_id belongs to the allowed subset
+            if not user_qs.filter(id=view_as_id).exists():
+                raise PermissionDenied("You do not have permission to view data for this user.")
+            user_qs = User.objects.filter(id=view_as_id)
+            
+        return user_qs
+
+    def get_task_queryset_for_users(self, allowed_users):
+        return Task.objects.filter(assigned_to__in=allowed_users)
+
+    def get(self, request):
+        view_as_id = request.query_params.get('view_as')
+        
+        allowed_users = self._get_allowed_users_for(request.user, view_as_id)
+        tasks = self.get_task_queryset_for_users(allowed_users)
+        
+        now = timezone.now().date()
+        
+        # 1. Metrics
+        total_tasks = tasks.count()
+        completed_tasks = tasks.filter(status='done').count()
+        pending_tasks = tasks.exclude(status='done').count()
+        overdue_tasks = tasks.filter(status__in=['todo', 'in_progress'], due_date__lt=now).count()
+
+        # 2. task distribution
+        distribution = {
+            'todo': tasks.filter(status='todo').count(),
+            'in_progress': tasks.filter(status='in_progress').count(),
+            'done': completed_tasks,
+        }
+
+        # 3. weekly performance (Tasks completed in the last 7 days)
+        seven_days_ago = now - timedelta(days=7)
+        weekly_tasks = tasks.filter(status='done', due_date__gte=seven_days_ago, due_date__lte=now) # Assuming due_date was the metric.
+        # Group by due_date
+        weekly_performance = list(weekly_tasks.values('due_date').annotate(count=Count('id')).order_by('due_date'))
+
+        return Response({
+            'metrics': {
+                'total_tasks': total_tasks,
+                'completed_tasks': completed_tasks,
+                'pending_tasks': pending_tasks,
+                'overdue_tasks': overdue_tasks,
+            },
+            'distribution': distribution,
+            'weekly_performance': weekly_performance
+        })
