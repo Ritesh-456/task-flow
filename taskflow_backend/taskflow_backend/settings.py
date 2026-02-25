@@ -66,11 +66,12 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'taskflow_db',
         'USER': 'postgres',
-        'PASSWORD': 'your_postgres_password',
+        'PASSWORD': '1234', 
         'HOST': 'localhost',
         'PORT': '5432',
     }
 }
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {
