@@ -9,4 +9,5 @@ urlpatterns = [
     path('api/v1/notifications/', include('notifications.urls')),
     path('api/v1/analytics/', include('analytics.urls')),
     path('api/v1/performance/', include('performance.urls')),
+    path('api/v1/ai/', include('ai.urls')),
 ]

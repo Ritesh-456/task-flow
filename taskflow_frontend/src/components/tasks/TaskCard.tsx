@@ -50,7 +50,7 @@ const TaskCard = ({ task, index }: { task: Task; index: number }) => {
   };
 
   return (
-    <Draggable draggableId={task._id || task.id} index={index}>
+    <Draggable draggableId={String(task._id || task.id)} index={index}>
       {(provided, snapshot) => (
         <div
           ref={provided.innerRef}

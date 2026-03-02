@@ -3,8 +3,8 @@ import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 // Vite will statically bundle these images when explicitly imported.
-import lightDashboardImg from "../../../public/light_dashboard.png";
-import darkDashboardImg from "../../../public/dark_dashboard.png";
+import lightDashboardImg from "@/assets/light_dashboard.png";
+import darkDashboardImg from "@/assets/dark_dashboard.png";
 
 const HeroSection = () => {
   return (

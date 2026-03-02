@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'notifications',
     'analytics',
     'performance',
+    'ai',
 ]
 
 MIDDLEWARE = [
@@ -121,10 +122,23 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
 }
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
+ALLOWED_HOSTS = [
+    'localhost', 
+    '127.0.0.1', 
+    '*', # Temporarily allow all for Vercel preview domain wildcard matching
 ]
+
+DATABASES = {
+    # Default to sqlite locally, but use Supabase Database URL in production (Render)
+    'default': dj_database_url.config(
+        default='sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite3'),
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
+}
+
+# Added Vercel wildcards for cross-origin tracking
+CORS_ALLOW_ALL_ORIGINS = True # Override for Vercel preview environments
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
     "accept",
