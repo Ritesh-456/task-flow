@@ -12,15 +12,14 @@ class Tenant(models.Model):
     plan = models.CharField(max_length=20, choices=PLAN_CHOICES, default='free')
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return self.name
+
 
 class CustomUserManager(BaseUserManager):
-    def create_user(self, email, password=None, **extra_fields):
+    def create_user(self, email, password=None, avatar=None, **extra_fields):
         if not email:
             raise ValueError('Email field is mandatory.')
         email = self.normalize_email(email)
-        user = self.model(email=email, **extra_fields)
+        user = self.model(email=email, avatar=avatar, **extra_fields)
         if password:
             user.set_password(password)
         else:
@@ -47,6 +46,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='employee')
     avatar = models.URLField(max_length=500, blank=True, null=True)
+    preferences = models.JSONField(default=dict, blank=True)
     
     # Self-referencing fields for hierarchy
     created_by = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='created_users')
@@ -61,18 +61,21 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
 
-    def __str__(self):
-        return f"{self.first_name} {self.last_name} ({self.email})"
+import uuid
 
 class Invite(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     code = models.CharField(max_length=64, unique=True)
+    email = models.EmailField(blank=True, null=True)
     role = models.CharField(max_length=20, choices=User.ROLE_CHOICES)
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name='invites')
+    team_id = models.CharField(max_length=100, blank=True, null=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_invites')
     is_used = models.BooleanField(default=False)
     used_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='accepted_invites')
     expires_at = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Invite for {self.role} created by {self.created_by.email}"

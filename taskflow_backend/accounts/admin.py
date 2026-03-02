@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Tenant, User, Invite
+from .models import Tenant, User
 
 @admin.register(Tenant)
 class TenantAdmin(admin.ModelAdmin):
@@ -14,8 +14,4 @@ class UserAdmin(admin.ModelAdmin):
     list_filter = ('role', 'is_active', 'tenant')
     ordering = ('email',)
 
-@admin.register(Invite)
-class InviteAdmin(admin.ModelAdmin):
-    list_display = ('code', 'role', 'tenant', 'created_by', 'is_used', 'expires_at')
-    list_filter = ('role', 'is_used', 'tenant', 'expires_at')
-    search_fields = ('code', 'created_by__email')
+

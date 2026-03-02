@@ -49,9 +49,9 @@ export default function AnalyticsDashboard() {
 
                 // Assign a color map to the distribution payload to match the mocked UI pie chart colors
                 const colorMap: Record<string, string> = {
-                    'Done': '#10b981',
-                    'In-progress': '#3b82f6',
-                    'Todo': '#f59e0b',
+                    'Completed': '#10b981',
+                    'In Progress': '#3b82f6',
+                    'To Do': '#f59e0b',
                     'Blocked': '#ef4444'
                 };
 
@@ -62,24 +62,8 @@ export default function AnalyticsDashboard() {
                 setDistribution(mappedDistribution);
 
                 // Ensure the LineChart always has exactly a 7-day trailing window to draw connecting lines.
-                // We force a flat map of 7 days to prevent single-point arrays from collapsing the Recharts XAxis.
-                const finalTimeData = Array.from({ length: 7 }).map((_, i) => {
-                    const d = new Date();
-                    d.setDate(d.getDate() - (6 - i));
-                    const dateStr = d.toISOString().split('T')[0];
-
-                    // Allow the backend data to override the padded 0 values if it exists
-                    const backendArray = Array.isArray(timeRes.data) ? timeRes.data : [];
-                    const apiMatch = backendArray.find((item: any) => item.date === dateStr);
-
-                    return {
-                        date: dateStr,
-                        created: apiMatch ? Number(apiMatch.created) : 0,
-                        completed: apiMatch ? Number(apiMatch.completed) : 0,
-                        pending: apiMatch ? Number(apiMatch.pending) : 0,
-                        overdue: apiMatch ? Number(apiMatch.overdue) : 0
-                    };
-                });
+                // The backend already pads days with 0s and correctly types dates as YYYY-MM-DD.
+                const finalTimeData = Array.isArray(timeRes.data) ? timeRes.data : [];
 
                 setTimeData(finalTimeData);
 
@@ -269,7 +253,7 @@ export default function AnalyticsDashboard() {
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={productivity} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                                            <XAxis dataKey="firstName" stroke="hsl(var(--muted-foreground))" />
+                                            <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
                                             <YAxis stroke="hsl(var(--muted-foreground))" />
                                             <RechartsTooltip
                                                 contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}

@@ -23,13 +23,13 @@ const AccountSettings = lazy(() => import("./pages/settings/AccountSettings"));
 const PreferencesSettings = lazy(() => import("./pages/settings/PreferencesSettings"));
 const SecuritySettings = lazy(() => import("./pages/settings/SecuritySettings"));
 const ActivityLogs = lazy(() => import("./pages/settings/ActivityLogs"));
-const TeamManagement = lazy(() => import("./pages/settings/TeamManagement"));
 const ProjectSettings = lazy(() => import("./pages/settings/ProjectSettings"));
 const NotificationSettings = lazy(() => import("./pages/settings/NotificationSettings"));
 
 // Lazy load Admin & Analytics Pages
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const UserManagement = lazy(() => import("./pages/admin/UserManagement"));
+const TeamManagement = lazy(() => import("./pages/admin/TeamManagement"));
 const ProjectManagement = lazy(() => import("./pages/admin/ProjectManagement"));
 const TaskMonitoring = lazy(() => import("./pages/admin/TaskMonitoring"));
 const AnalyticsDashboard = lazy(() => import("./pages/analytics/AnalyticsDashboard"));
@@ -114,12 +114,12 @@ const App = () => (
                 <Route path="/settings/notifications" element={<ProtectedRoute><NotificationSettings /></ProtectedRoute>} />
                 <Route path="/settings/security" element={<ProtectedRoute><SecuritySettings /></ProtectedRoute>} />
                 <Route path="/settings/activity" element={<ProtectedRoute><ActivityLogs /></ProtectedRoute>} />
-                <Route path="/settings/team" element={<ProtectedRoute><TeamManagement /></ProtectedRoute>} />
                 <Route path="/settings/projects" element={<ProtectedRoute><ProjectSettings /></ProtectedRoute>} />
 
                 {/* Admin & Analytics Routes */}
                 <Route path="/admin" element={<RoleProtectedRoute allowedRoles={["super_admin", "admin"]}><AdminDashboard /></RoleProtectedRoute>} />
                 <Route path="/admin/users" element={<RoleProtectedRoute allowedRoles={["super_admin"]}><UserManagement /></RoleProtectedRoute>} />
+                <Route path="/admin/team" element={<RoleProtectedRoute allowedRoles={["super_admin", "admin"]}><TeamManagement /></RoleProtectedRoute>} />
                 <Route path="/admin/projects" element={<RoleProtectedRoute allowedRoles={["super_admin", "admin"]}><ProjectManagement /></RoleProtectedRoute>} />
                 <Route path="/admin/tasks" element={<RoleProtectedRoute allowedRoles={["super_admin", "admin"]}><TaskMonitoring /></RoleProtectedRoute>} />
                 <Route path="/analytics" element={<RoleProtectedRoute allowedRoles={["super_admin", "admin"]}><AnalyticsDashboard /></RoleProtectedRoute>} />

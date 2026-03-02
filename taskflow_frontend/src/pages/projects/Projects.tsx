@@ -18,36 +18,30 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
 import { Project } from "@/types";
 
+// Import Modals
+import { EditProjectModal } from "./components/EditProjectModal";
+import { AssignRoleModal } from "./components/AssignRoleModal";
+import { ViewMembersModal } from "./components/ViewMembersModal";
+import { DeleteConfirmModal } from "./components/DeleteConfirmModal";
+
+type ModalType = "edit" | "assign_admins" | "assign_managers" | "assign_employees" | "view_members" | "delete" | null;
+
 const Projects = () => {
-  const { projects, users, addProject, updateProject, deleteProject, addProjectMember, removeProjectMember } = useData();
-  const { user, activeRole } = useAuth();
+  const { projects, users, addProject } = useData();
+  const { activeRole } = useAuth();
   const navigate = useNavigate();
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [modalType, setModalType] = useState<ModalType>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   const [projectName, setProjectName] = useState("");
   const [projectDesc, setProjectDesc] = useState("");
-  const [assignUserId, setAssignUserId] = useState("");
 
   const handleCreateProject = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,52 +57,11 @@ const Projects = () => {
     setIsCreateDialogOpen(false);
   };
 
-  const handleEditClick = (project: Project) => {
+  const handleMenuClick = (e: React.MouseEvent, project: Project, type: ModalType) => {
+    e.stopPropagation();
     setSelectedProject(project);
-    setProjectName(project.name);
-    setProjectDesc(project.description || "");
-    setIsEditDialogOpen(true);
+    setModalType(type);
   };
-
-  const handleUpdateProject = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedProject || !projectName.trim()) return;
-
-    updateProject(selectedProject.id || (selectedProject as any)._id, {
-      name: projectName,
-      description: projectDesc,
-    });
-
-    setIsEditDialogOpen(false);
-    setSelectedProject(null);
-  };
-
-  const handleDeleteConfirm = () => {
-    if (!selectedProject) return;
-    deleteProject(selectedProject.id || (selectedProject as any)._id);
-    setIsDeleteDialogOpen(false);
-    setSelectedProject(null);
-  };
-
-  const handleAssignMember = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedProject || !assignUserId) return;
-
-    const projectId = selectedProject.id || (selectedProject as any)._id;
-    addProjectMember(projectId, assignUserId, "employee");
-    setIsAssignDialogOpen(false);
-    setAssignUserId("");
-  };
-
-  const manageableUsers = users.filter(u => {
-    if (activeRole === 'super_admin' || activeRole === 'admin') return true;
-    if (activeRole === 'manager') {
-      // Manager can only assign subordinates
-      const currentId = user?._id || user?.id;
-      return (u.role === 'employee') && (u.reportsTo === currentId || (u as any).reports_to === currentId);
-    }
-    return false;
-  });
 
   return (
     <AppLayout>
@@ -166,7 +119,7 @@ const Projects = () => {
             <FolderKanban className="h-12 w-12 text-muted-foreground/30 mb-4" />
             <h3 className="text-lg font-medium text-foreground">No Projects Yet</h3>
             <p className="text-sm text-muted-foreground mt-2 max-w-sm">Create your first project to start organizing tasks and collaborating with your team.</p>
-            {activeRole !== "employee" && (activeRole !== "manager") && (
+            {activeRole !== "employee" && activeRole !== "manager" && (
               <Button onClick={() => setIsCreateDialogOpen(true)} className="mt-6 gap-2">
                 <Plus className="h-4 w-4" />
                 Create First Project
@@ -197,49 +150,48 @@ const Projects = () => {
                     </div>
 
                     {activeRole !== "employee" && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            className="rounded p-1 text-muted-foreground transition-all hover:bg-surface group-hover:opacity-100"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          {(activeRole === 'super_admin') && (
-                            <>
-                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditClick(project); }}>
-                                <Edit className="mr-2 h-4 w-4" /> Edit Project
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="rounded p-1 text-muted-foreground transition-all hover:bg-surface group-hover:opacity-100">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            {activeRole === 'super_admin' && (
+                              <>
+                                <DropdownMenuItem onClick={(e) => handleMenuClick(e, project, "edit")}>
+                                  <Edit className="mr-2 h-4 w-4" /> Edit Project
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => handleMenuClick(e, project, "assign_admins")}>
+                                  <UserPlus className="mr-2 h-4 w-4" /> Assign Admins
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            {(activeRole === 'super_admin' || activeRole === 'admin') && (
+                              <DropdownMenuItem onClick={(e) => handleMenuClick(e, project, "assign_managers")}>
+                                <UserPlus className="mr-2 h-4 w-4" /> Assign Managers
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); }}>
-                                <UserPlus className="mr-2 h-4 w-4" /> Assign Admins
+                            )}
+                            {(activeRole === 'super_admin' || activeRole === 'admin' || activeRole === 'manager') && (
+                              <DropdownMenuItem onClick={(e) => handleMenuClick(e, project, "assign_employees")}>
+                                <UserPlus className="mr-2 h-4 w-4" /> Assign Employees
                               </DropdownMenuItem>
-                            </>
-                          )}
-                          {(activeRole === 'super_admin' || activeRole === 'admin') && (
-                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); }}>
-                              <UserPlus className="mr-2 h-4 w-4" /> Assign Managers
+                            )}
+                            <DropdownMenuItem onClick={(e) => handleMenuClick(e, project, "view_members")}>
+                              <Users className="mr-2 h-4 w-4" /> View Members
                             </DropdownMenuItem>
-                          )}
-                          {activeRole === 'manager' && (
-                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setSelectedProject(project); setIsAssignDialogOpen(true); }}>
-                              <UserPlus className="mr-2 h-4 w-4" /> Assign Employees
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); }}>
-                            <Users className="mr-2 h-4 w-4" /> View Members
-                          </DropdownMenuItem>
-                          {activeRole === 'super_admin' && (
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={(e) => { e.stopPropagation(); setSelectedProject(project); setIsDeleteDialogOpen(true); }}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" /> Delete Project
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                            {activeRole === 'super_admin' && (
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={(e) => handleMenuClick(e, project, "delete")}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" /> Delete Project
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     )}
                   </div>
 
@@ -280,94 +232,14 @@ const Projects = () => {
           </div>
         )}
 
-        {/* Edit Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Edit Project</DialogTitle>
-              <DialogDescription>
-                Update project details.
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleUpdateProject} className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <label htmlFor="edit-name" className="text-sm font-medium">Name</label>
-                <Input
-                  id="edit-name"
-                  value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
-                  placeholder="Project Name"
-                  required
-                />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="edit-description" className="text-sm font-medium">Description</label>
-                <Textarea
-                  id="edit-description"
-                  value={projectDesc}
-                  onChange={(e) => setProjectDesc(e.target.value)}
-                  placeholder="Project Description"
-                />
-              </div>
-              <DialogFooter>
-                <Button type="submit">Save Changes</Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+        {/* Dynamic Modals Rendering */}
+        {modalType === "edit" && <EditProjectModal project={selectedProject} onClose={() => setModalType(null)} />}
+        {modalType === "assign_admins" && <AssignRoleModal project={selectedProject} onClose={() => setModalType(null)} roleToAssign="admin" />}
+        {modalType === "assign_managers" && <AssignRoleModal project={selectedProject} onClose={() => setModalType(null)} roleToAssign="manager" />}
+        {modalType === "assign_employees" && <AssignRoleModal project={selectedProject} onClose={() => setModalType(null)} roleToAssign="employee" />}
+        {modalType === "view_members" && <ViewMembersModal project={selectedProject} onClose={() => setModalType(null)} />}
+        {modalType === "delete" && <DeleteConfirmModal project={selectedProject} onClose={() => setModalType(null)} />}
 
-        {/* Delete Confirmation */}
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the project
-                and all of its associated tasks.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setSelectedProject(null)}>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Delete Project
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {/* Assign Member Dialog */}
-        <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Assign Team Member</DialogTitle>
-              <DialogDescription>
-                Assign an employee to this project.
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleAssignMember} className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <label htmlFor="user-select" className="text-sm font-medium">Select Employee</label>
-                <select
-                  id="user-select"
-                  value={assignUserId}
-                  onChange={(e) => setAssignUserId(e.target.value)}
-                  className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  required
-                >
-                  <option value="">Select an employee...</option>
-                  {manageableUsers.map(u => (
-                    <option key={u._id || u.id} value={u._id || u.id}>
-                      {u.firstName || u.first_name} {u.lastName || u.last_name} ({u.role})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <DialogFooter>
-                <Button type="submit">Assign to Project</Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
       </div>
     </AppLayout>
   );

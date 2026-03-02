@@ -132,8 +132,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const register = async (firstName: string, lastName: string, email: string, password: string, gender: string, role: string, inviteCode?: string, avatar?: string) => {
         setIsLoading(true);
         try {
-            // Note: Our Django ConsumeInviteView expects { first_name, last_name, email, password, code }
-            const { data } = await api.post("/accounts/invites/consume/", {
+            const { data } = await api.post("/accounts/auth/signup-with-invite/", {
                 first_name: firstName,
                 last_name: lastName,
                 email,

@@ -1,52 +1,61 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Play } from "lucide-react";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import dashboardPreview from "@/assets/dashboard-preview.png";
+// Vite will statically bundle these images when explicitly imported.
+import lightDashboardImg from "../../../public/light_dashboard.png";
+import darkDashboardImg from "../../../public/dark_dashboard.png";
 
 const HeroSection = () => {
   return (
-    <section id="home" className="gradient-hero relative overflow-hidden">
-      <div className="container mx-auto px-4 py-20 md:py-32">
-        <div className="mx-auto max-w-4xl text-center">
+    <section className="relative overflow-hidden pt-32 pb-20 md:pt-40 md:pb-28">
+      {/* Background decoration */}
+      <div className="absolute top-0 right-0 -translate-y-12 translate-x-1/3 opacity-20 pointer-events-none">
+        <div className="w-[600px] h-[600px] rounded-full gradient-primary blur-[100px]" />
+      </div>
+      <div className="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 opacity-20 pointer-events-none">
+        <div className="w-[600px] h-[600px] rounded-full gradient-accent blur-[100px]" />
+      </div>
+
+      <div className="container mx-auto px-6 lg:px-8 relative z-10 text-center">
+        <div className="mx-auto max-w-4xl">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6 }}
+            className="mb-6 inline-flex items-center rounded-full border border-border bg-card px-4 py-1.5 shadow-sm text-sm font-medium"
           >
-            <span className="inline-block rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-semibold text-primary mb-6">
-              🚀 The future of team productivity
-            </span>
+            <span className="flex h-2 w-2 rounded-full bg-primary mr-2 animate-pulse" />
+            <span className="text-foreground">TaskFlow v2.0 is now live</span>
           </motion.div>
 
           <motion.h1
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl md:text-6xl leading-tight"
+            className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-8"
           >
-            Manage Teams, Tasks, and{" "}
-            <span className="text-primary block mt-2">Performance in One Place</span>
+            Manage tasks with <br className="hidden md:block" />
+            <span className="text-gradient">unprecedented clarity</span>
           </motion.h1>
 
           <motion.p
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground"
+            className="mx-auto max-w-2xl text-xl text-muted-foreground mb-10 leading-relaxed"
           >
-            TaskFlow is the all-in-one platform for modern teams.
-            Track progress, manage hierarchies, and boost productivity with AI-driven insights.
+            The intelligent productivity suite designed for modern teams. Streamline workflows, eliminate chaos, and deliver projects faster.
           </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
+            className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
-            <Button asChild size="lg" className="gradient-primary border-0 text-primary-foreground px-8 text-base hover:opacity-90 shadow-elevated">
-              <Link to="/signup">
+            <Button asChild size="lg" className="px-8 text-base shadow-elevated transition-transform hover:scale-105">
+              <Link to="/register">
                 Get Started <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
@@ -66,9 +75,15 @@ const HeroSection = () => {
         >
           <div className="rounded-xl border border-border bg-card p-2 shadow-elevated">
             <img
-              src={dashboardPreview}
-              alt="TaskFlow dashboard preview"
-              className="rounded-lg w-full"
+              src={lightDashboardImg}
+              alt="TaskFlow dashboard preview light"
+              className="rounded-lg w-full dark:hidden"
+              loading="lazy"
+            />
+            <img
+              src={darkDashboardImg}
+              alt="TaskFlow dashboard preview dark"
+              className="rounded-lg w-full hidden dark:block"
               loading="lazy"
             />
           </div>

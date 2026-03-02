@@ -123,3 +123,40 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+class InviteListView(generics.ListAPIView):
+    """
+    GET: Returns a list of all invites associated with the current tenant.
+    """
+    serializer_class = InviteGenerateSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Invite.objects.filter(tenant=self.request.user.tenant).order_by('-created_at')
+
+from django.core.mail import send_mail
+
+class SendInviteEmailView(generics.GenericAPIView):
+    """
+    POST: Send the generated invite email via Django's console/SMTP backend.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        email = request.data.get('email')
+        message = request.data.get('message')
+
+        if not email or not message:
+            return Response({"error": "Both email and message are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            send_mail(
+                subject='You are invited to TaskFlow!',
+                message=message,
+                from_email='noreply@taskflow.dev',
+                recipient_list=[email],
+                fail_silently=False,
+            )
+            return Response({"message": "Email sent successfully."}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

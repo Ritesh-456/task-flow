@@ -47,7 +47,8 @@ class SuperAdminSignupSerializer(serializers.ModelSerializer):
                 password=password,
                 first_name=validated_data.get('first_name', ''),
                 last_name=validated_data.get('last_name', ''),
-                role='super_admin'
+                role='super_admin',
+                avatar=validated_data.get('avatar')
             )
             
             # 2. Complete Auto Tenant Creation 
@@ -68,7 +69,7 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['id', 'first_name', 'last_name', 'email', 'role', 'tenant', 'avatar', 'is_active', 'created_at']
+        fields = ['id', 'first_name', 'last_name', 'email', 'role', 'tenant', 'avatar', 'preferences', 'is_active', 'created_at']
         read_only_fields = ['id', 'created_at', 'tenant']
 
 class StandardUserCreateSerializer(serializers.ModelSerializer):
@@ -76,7 +77,7 @@ class StandardUserCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'password', 'role']
+        fields = ['first_name', 'last_name', 'email', 'password', 'role', 'avatar']
 
     def validate_role(self, value):
         request_user = self.context['request'].user
@@ -105,15 +106,54 @@ class StandardUserCreateSerializer(serializers.ModelSerializer):
             role=validated_data['role'],
             tenant=get_current_tenant(),
             created_by=request_user,
-            reports_to=request_user
+            reports_to=request_user,
+            avatar=validated_data.get('avatar')
         )
         return user
 
+import urllib.parse
+
 class InviteGenerateSerializer(serializers.ModelSerializer):
+    invite_link = serializers.SerializerMethodField()
+    whatsapp_link = serializers.SerializerMethodField()
+    message = serializers.SerializerMethodField()
+
     class Meta:
         model = Invite
-        fields = ['code', 'role', 'expires_at']
-        read_only_fields = ['code']
+        fields = ['id', 'code', 'email', 'role', 'team_id', 'is_used', 'expires_at', 'invite_link', 'whatsapp_link', 'message']
+        read_only_fields = ['id', 'code', 'is_used', 'expires_at', 'invite_link', 'whatsapp_link', 'message']
+
+    def get_invite_link(self, obj):
+        request = self.context.get('request')
+        origin = request.headers.get('Origin', 'http://localhost:8080')
+        return f"{origin}/signup?code={obj.code}"
+
+    def get_message(self, obj):
+        sender = obj.created_by
+        company = obj.tenant.name
+        role_display = dict(User.ROLE_CHOICES).get(obj.role, obj.role)
+        
+        receiver = obj.email if obj.email else "there"
+        team_str = f"Team: {obj.team_id}\n" if obj.team_id else ""
+        link = self.get_invite_link(obj)
+        
+        return (
+            f"Hello {receiver},\n\n"
+            f"You have been invited to join {company} on TaskFlow as a {role_display}.\n\n"
+            f"{team_str}Invited by: {sender.first_name} {sender.last_name}\n\n"
+            f"Use the link below to join:\n"
+            f"{link}\n\n"
+            f"Or use this invite code:\n"
+            f"{obj.code}\n\n"
+            f"⚠️ This link is private and expires in 48 hours.\n"
+            f"Do not share this with anyone.\n\n"
+            f"Welcome to TaskFlow 🚀"
+        )
+
+    def get_whatsapp_link(self, obj):
+        msg = self.get_message(obj)
+        encoded_msg = urllib.parse.quote(msg)
+        return f"https://wa.me/?text={encoded_msg}"
 
     def validate_role(self, value):
         request_user = self.context['request'].user
@@ -136,9 +176,9 @@ class InviteGenerateSerializer(serializers.ModelSerializer):
         validated_data['tenant'] = request_user.tenant
         validated_data['code'] = secrets.token_urlsafe(16)
         
-        # Default expiration to 7 days if not provided
+        # Default expiration to 48 hours logic
         if 'expires_at' not in validated_data:
-            validated_data['expires_at'] = timezone.now() + timezone.timedelta(days=7)
+            validated_data['expires_at'] = timezone.now() + timezone.timedelta(hours=48)
             
         return super().create(validated_data)
 

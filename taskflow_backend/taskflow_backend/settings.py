@@ -27,6 +27,8 @@ INSTALLED_APPS = [
     'projects',
     'tasks',
     'notifications',
+    'analytics',
+    'performance',
 ]
 
 MIDDLEWARE = [
@@ -136,4 +138,7 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
     "x-impersonate-user",
 ]
+
+# Email Configuration (Console for local dev)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 

@@ -20,10 +20,13 @@ const Register = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
 
+  const searchParams = new URLSearchParams(window.location.search);
+  const urlInviteCode = searchParams.get("code") || "";
+
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [inviteCode, setInviteCode] = useState("");
+  const [inviteCode, setInviteCode] = useState(urlInviteCode);
   const [role, setRole] = useState("employee");
   const [gender, setGender] = useState("male");
   const [password, setPassword] = useState("");
@@ -197,6 +200,8 @@ const Register = () => {
               <label className="mb-1.5 block text-sm font-medium text-foreground">First Name</label>
               <input
                 type="text"
+                name="firstName"
+                autoComplete="given-name"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="John"
@@ -208,6 +213,8 @@ const Register = () => {
               <label className="mb-1.5 block text-sm font-medium text-foreground">Last Name</label>
               <input
                 type="text"
+                name="lastName"
+                autoComplete="family-name"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="Doe"
@@ -221,6 +228,8 @@ const Register = () => {
             <label className="mb-1.5 block text-sm font-medium text-foreground">Email</label>
             <input
               type="email"
+              name="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
@@ -242,29 +251,32 @@ const Register = () => {
               </select>
             </div>
 
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-foreground">Position</label>
-              <select
-                value={role}
-                onChange={e => setRole(e.target.value)}
-                className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              >
-                <option value="employee">Employee</option>
-                <option value="manager">Manager</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
+            {!urlInviteCode && (
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-foreground">Position</label>
+                <select
+                  value={role}
+                  onChange={e => setRole(e.target.value)}
+                  className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  <option value="employee">Employee</option>
+                  <option value="manager">Manager</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+            )}
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-foreground">Invite Code</label>
+            <label className="mb-1.5 block text-sm font-medium text-foreground">Invite Code (Required)</label>
             <input
               type="text"
               value={inviteCode}
               onChange={(e) => setInviteCode(e.target.value)}
-              placeholder="Enter invite code"
-              className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              placeholder="Enter your invite code"
+              className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
               required
+              disabled={!!urlInviteCode}
             />
           </div>
 
@@ -273,6 +285,8 @@ const Register = () => {
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
+                name="password"
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"

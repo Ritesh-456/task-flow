@@ -29,7 +29,7 @@ const TopNav = ({ sidebarOpen, onToggleSidebar }: TopNavProps) => {
     });
 
     try {
-      await api.put("/users/preferences", { theme: newTheme });
+      await api.patch("/accounts/profile/", { preferences: { theme: newTheme } });
     } catch (error) {
       console.error("Failed to save theme preference");
       updateUser({
@@ -58,6 +58,8 @@ const TopNav = ({ sidebarOpen, onToggleSidebar }: TopNavProps) => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
+              id="search"
+              name="search"
               type="text"
               placeholder="Search..."
               className="h-9 w-32 sm:w-48 md:w-64 rounded-md border border-border bg-surface pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-all"

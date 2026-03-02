@@ -33,11 +33,12 @@ const adminItems = [
     { icon: Users, label: "User Management", href: "/admin/users" },
     { icon: Folder, label: "Project Management", href: "/admin/projects" },
     { icon: Settings, label: "Task Monitoring", href: "/admin/tasks" },
+    { icon: Users, label: "Team Management", href: "/admin/team" },
 ];
 
 export default function SidebarLayout({ children }: SidebarLayoutProps) {
     const { user } = useAuth();
-    const isAdmin = user?.role === 'admin' || user?.role === 'manager'; // Simple check, refine as needed for specific items
+    const isAdmin = user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'manager'; // Simple check, refine as needed for specific items
 
     return (
         <AppLayout>

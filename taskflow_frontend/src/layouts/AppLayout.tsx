@@ -56,7 +56,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   }, [isCollapsed]);
 
   return (
-    <div className={cn("flex min-h-screen bg-background relative", impersonatedUser ? "pt-10" : "")}>
+    <div className={cn("app-container flex min-h-screen bg-background relative", impersonatedUser ? "pt-10" : "")}>
       <ImpersonationBanner />
       <Sidebar
         isOpen={sidebarOpen}

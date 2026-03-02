@@ -19,34 +19,29 @@ class TaskListCreateView(generics.ListCreateAPIView):
     serializer_class = TaskSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def _get_allowed_users_for(self, effective_user):
+        if effective_user.role == 'super_admin':
+            return User.objects.filter(tenant=effective_user.tenant)
+        elif effective_user.role == 'admin':
+            subordinates = User.objects.filter(reports_to=effective_user)
+            sub_subordinates = User.objects.filter(reports_to__in=subordinates)
+            return User.objects.filter(id__in=list(subordinates.values_list('id', flat=True)) + list(sub_subordinates.values_list('id', flat=True)) + [effective_user.id])
+        elif effective_user.role == 'manager':
+            employees = User.objects.filter(reports_to=effective_user)
+            return User.objects.filter(id__in=list(employees.values_list('id', flat=True)) + [effective_user.id])
+        elif effective_user.role == 'employee':
+            return User.objects.filter(id=effective_user.id)
+        return User.objects.none()
+
     def get_queryset(self):
         user = getattr(self.request, 'effective_user', self.request.user)
+        base_qs = Task.objects.filter(project__tenant=user.tenant)
         
-        # Super Admin: all tenant tasks
         if user.role == 'super_admin':
-            return Task.objects.all() # Middleware handles tenant
+            return base_qs
             
-        # Admin: tasks of their managers + employees
-        elif user.role == 'admin':
-            # Find users who report to this Admin (Managers)
-            subordinates = User.objects.filter(reports_to=user)
-            # Find employees who report to those Managers
-            sub_subordinates = User.objects.filter(reports_to__in=subordinates)
-            
-            allowed_users = list(subordinates) + list(sub_subordinates) + [user]
-            return Task.objects.filter(assigned_to__in=allowed_users)
-            
-        # Manager: tasks assigned to their employees
-        elif user.role == 'manager':
-            employees = User.objects.filter(reports_to=user)
-            allowed_users = list(employees) + [user]
-            return Task.objects.filter(assigned_to__in=allowed_users)
-            
-        # Employee: tasks assigned to them only
-        elif user.role == 'employee':
-            return Task.objects.filter(assigned_to=user)
-            
-        return Task.objects.none()
+        allowed_users = self._get_allowed_users_for(user)
+        return base_qs.filter(assigned_to__in=allowed_users)
 
 class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
@@ -58,51 +53,32 @@ class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # We reuse the same visibility filtering for details
         user = getattr(self.request, 'effective_user', self.request.user)
+        base_qs = Task.objects.filter(project__tenant=user.tenant)
         
         if user.role == 'super_admin':
-            return Task.objects.all()
+            return base_qs
             
-        elif user.role == 'admin':
-            subordinates = User.objects.filter(reports_to=user)
-            sub_subordinates = User.objects.filter(reports_to__in=subordinates)
-            allowed_users = list(subordinates) + list(sub_subordinates) + [user]
-            return Task.objects.filter(assigned_to__in=allowed_users)
-            
-        elif user.role == 'manager':
-            employees = User.objects.filter(reports_to=user)
-            allowed_users = list(employees) + [user]
-            return Task.objects.filter(assigned_to__in=allowed_users)
-            
-        elif user.role == 'employee':
-            return Task.objects.filter(assigned_to=user)
-            
-        return Task.objects.none()
+        allowed_users = TaskListCreateView._get_allowed_users_for(self, user)
+        return base_qs.filter(assigned_to__in=allowed_users)
 
 class DashboardMetricsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def _get_allowed_users_for(self, request_user, effective_user):
-        """
-        Returns a queryset of users based on the effective_user context.
-        The middleware already validated the relationship.
-        """
-        user_qs = User.objects.none()
-
         if effective_user.role == 'super_admin':
-            user_qs = User.objects.all()
+            return User.objects.filter(tenant=effective_user.tenant)
         elif effective_user.role == 'admin':
             subordinates = User.objects.filter(reports_to=effective_user)
             sub_subordinates = User.objects.filter(reports_to__in=subordinates)
-            user_qs = User.objects.filter(id__in=list(subordinates.values_list('id', flat=True)) + list(sub_subordinates.values_list('id', flat=True)) + [effective_user.id])
+            return User.objects.filter(id__in=list(subordinates.values_list('id', flat=True)) + list(sub_subordinates.values_list('id', flat=True)) + [effective_user.id])
         elif effective_user.role == 'manager':
             employees = User.objects.filter(reports_to=effective_user)
-            user_qs = User.objects.filter(id__in=list(employees.values_list('id', flat=True)) + [effective_user.id])
+            return User.objects.filter(id__in=list(employees.values_list('id', flat=True)) + [effective_user.id])
         elif effective_user.role == 'employee':
-            user_qs = User.objects.filter(id=effective_user.id)
+            return User.objects.filter(id=effective_user.id)
             
-        return user_qs
+        return User.objects.none()
 
     def get_task_queryset_for_users(self, allowed_users):
         return Task.objects.filter(assigned_to__in=allowed_users)
