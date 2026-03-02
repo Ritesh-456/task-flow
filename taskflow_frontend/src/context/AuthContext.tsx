@@ -21,6 +21,18 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const normalizeUser = (userData: any): User => {
+    if (!userData) return userData;
+    return {
+        ...userData,
+        id: userData.id?.toString() || userData._id,
+        _id: userData._id || userData.id?.toString(),
+        firstName: userData.firstName || userData.first_name || "",
+        lastName: userData.lastName || userData.last_name || "",
+        role: userData.role || "employee",
+    } as User;
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -34,7 +46,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (storedUser) {
                 try {
                     const parsedUser = JSON.parse(storedUser);
-                    setUser(parsedUser);
+                    setUser(normalizeUser(parsedUser));
                 } catch (e) {
                     console.error("Failed to parse user", e);
                     localStorage.removeItem("taskflow_user");
@@ -93,17 +105,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const login = async (email: string, password: string) => {
         setIsLoading(true);
         try {
-            const { data } = await api.post("/auth/login", { email, password });
-            setUser(data);
+            const { data } = await api.post("/accounts/login/", { email, password });
+            // Django Custom View returns { access, refresh, user }
+            const { access, user: userData } = data;
+            const normalizedUser = normalizeUser(userData);
+
+            localStorage.setItem("taskflow_token", access);
+            localStorage.setItem("taskflow_user", JSON.stringify(normalizedUser));
+
+            setUser(normalizedUser);
             setImpersonatedUser(null);
             localStorage.removeItem('taskflow_impersonated_user');
             localStorage.removeItem('taskflow_impersonated_user_data');
-            localStorage.setItem("taskflow_user", JSON.stringify(data));
+
             toast.success("Welcome back!");
             return true;
         } catch (error: any) {
             console.error(error);
-            toast.error(error.response?.data?.message || "Login failed");
+            toast.error(error.response?.data?.detail || "Login failed");
             return false;
         } finally {
             setIsLoading(false);
@@ -113,13 +132,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const register = async (firstName: string, lastName: string, email: string, password: string, gender: string, role: string, inviteCode?: string, avatar?: string) => {
         setIsLoading(true);
         try {
-            const { data } = await api.post("/auth/register", { firstName, lastName, email, password, gender, role, inviteCode, avatar });
-            setUser(data);
-            setImpersonatedUser(null);
-            localStorage.removeItem('taskflow_impersonated_user');
-            localStorage.removeItem('taskflow_impersonated_user_data');
-            localStorage.setItem("taskflow_user", JSON.stringify(data));
-            toast.success("Account created successfully!");
+            // Note: Our Django ConsumeInviteView expects { first_name, last_name, email, password, code }
+            const { data } = await api.post("/accounts/invites/consume/", {
+                first_name: firstName,
+                last_name: lastName,
+                email,
+                password,
+                code: inviteCode
+            });
+
+            // Backend returns { message, user }
+            // Note: Register through invite usually requires a separate login step 
+            // but we can auto-login if the backend provides tokens.
+            // Our current ConsumeInviteView doesn't return tokens, so we'll just redirect to login
+            toast.success("Account created! Please log in.");
+            window.location.href = '/login';
             return true;
         } catch (error: any) {
             console.error(error);
@@ -133,13 +160,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const superAdminRegister = async (userData: any) => {
         setIsLoading(true);
         try {
-            const { data } = await api.post("/auth/super-admin-register", userData);
-            setUser(data);
-            setImpersonatedUser(null);
-            localStorage.removeItem('taskflow_impersonated_user');
-            localStorage.removeItem('taskflow_impersonated_user_data');
-            localStorage.setItem("taskflow_user", JSON.stringify(data));
-            toast.success("Super Admin account created successfully!");
+            // Mapping frontend camelCase to backend snake_case
+            const payload = {
+                first_name: userData.firstName,
+                last_name: userData.lastName,
+                email: userData.email,
+                password: userData.password,
+                company_name: userData.companyName,
+                plan: userData.plan
+            };
+
+            const { data } = await api.post("/accounts/signup/", payload);
+
+            // Backend returns { message, user }. We still need to log in to get tokens.
+            toast.success("Super Admin created! Please log in.");
+            window.location.href = '/login';
             return true;
         } catch (error: any) {
             console.error(error);
@@ -151,26 +186,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const logout = async () => {
-
-        try {
-            await api.post("/auth/logout");
-        } catch (e) {
-            console.error("Failed to call logout API", e);
-        }
+        // Django JWT logout is client-side (clear tokens)
         setUser(null);
         setImpersonatedUser(null);
         localStorage.removeItem('taskflow_impersonated_user');
         localStorage.removeItem('taskflow_impersonated_user_data');
         localStorage.removeItem("taskflow_user");
+        localStorage.removeItem("taskflow_token");
         toast.info("Logged out successfully");
-        // Full page reload inherently resets DataContext states from memory
         window.location.href = '/login';
     };
 
-    const updateUser = (userData: Partial<User>) => {
+    const updateUser = (userData: any) => {
         setUser(prev => {
             if (!prev) return null;
-            const updated = { ...prev, ...userData };
+            const updated = normalizeUser({ ...prev, ...userData });
             localStorage.setItem("taskflow_user", JSON.stringify(updated));
             return updated;
         });

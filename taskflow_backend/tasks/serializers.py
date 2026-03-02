@@ -6,14 +6,27 @@ from projects.models import Project
 User = get_user_model()
 
 class TaskSerializer(serializers.ModelSerializer):
+    assigned_to_name = serializers.SerializerMethodField()
+    assigned_by_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Task
         fields = [
             'id', 'tenant', 'project', 'title', 'description', 
-            'priority', 'status', 'assigned_to', 'assigned_by', 
-            'due_date', 'created_at'
+            'priority', 'status', 'assigned_to', 'assigned_to_name',
+            'assigned_by', 'assigned_by_name', 'due_date', 'created_at'
         ]
         read_only_fields = ['id', 'tenant', 'assigned_by', 'created_at']
+
+    def get_assigned_to_name(self, obj):
+        if obj.assigned_to:
+            return f"{obj.assigned_to.first_name} {obj.assigned_to.last_name}"
+        return "Unassigned"
+
+    def get_assigned_by_name(self, obj):
+        if obj.assigned_by:
+            return f"{obj.assigned_by.first_name} {obj.assigned_by.last_name}"
+        return "System"
 
     def validate_assigned_to(self, value):
         if not value:
@@ -44,9 +57,12 @@ class TaskSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        from accounts.middleware import get_current_tenant
+        from accounts.middleware import _thread_locals
         request_user = self.context['request'].user
-        validated_data['tenant'] = get_current_tenant()
+        
+        # Explicitly set thread-local for TenantAwareModel.save()
+        _thread_locals.tenant = request_user.tenant
+        validated_data['tenant'] = request_user.tenant
         validated_data['assigned_by'] = request_user
         
         if 'assigned_to' not in validated_data and request_user.role == 'employee':

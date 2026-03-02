@@ -22,7 +22,7 @@ export default function AccountSettings() {
         }
         setIsLoading(true);
         try {
-            await api.put("/users/profile", { password: newPassword });
+            await api.patch("/accounts/profile/", { password: newPassword });
             toast.success("Password updated successfully");
             setCurrentPassword("");
             setNewPassword("");

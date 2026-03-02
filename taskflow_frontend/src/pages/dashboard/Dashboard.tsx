@@ -28,8 +28,8 @@ const Dashboard = () => {
     if (user && user.role === 'super_admin') {
       const fetchHierarchy = async () => {
         try {
-          const queryParam = viewAsUserId ? `?userId=${viewAsUserId}` : '';
-          const { data } = await api.get(`/users${queryParam}`);
+          const queryParam = viewAsUserId ? `?view_as=${viewAsUserId}` : '';
+          const { data } = await api.get(`/accounts/users/${queryParam}`);
           setHierarchyUsers(data);
         } catch (error) {
           console.error("Failed to fetch hierarchy", error);
@@ -39,7 +39,7 @@ const Dashboard = () => {
     }
   }, [user]);
 
-  const activeUser = hierarchyUsers.find(u => u._id === viewAsUserId) || user;
+  const activeUser = hierarchyUsers.find(u => u.id === viewAsUserId) || user;
 
   const metrics = useMemo(() => {
     const now = new Date();
@@ -160,9 +160,9 @@ const Dashboard = () => {
                   <SelectContent>
                     <SelectItem value="current_user">Me ({user?.role})</SelectItem>
                     {hierarchyUsers
-                      .filter(u => u._id !== user?._id)
+                      .filter(u => u.id !== user?.id)
                       .map(u => (
-                        <SelectItem key={u._id} value={u._id}>
+                        <SelectItem key={u.id} value={u.id}>
                           {u.firstName} {u.lastName} ({u.role})
                         </SelectItem>
                       ))}

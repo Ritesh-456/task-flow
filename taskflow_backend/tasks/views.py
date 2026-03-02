@@ -20,7 +20,7 @@ class TaskListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
+        user = getattr(self.request, 'effective_user', self.request.user)
         
         # Super Admin: all tenant tasks
         if user.role == 'super_admin':
@@ -59,7 +59,7 @@ class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         # We reuse the same visibility filtering for details
-        user = self.request.user
+        user = getattr(self.request, 'effective_user', self.request.user)
         
         if user.role == 'super_admin':
             return Task.objects.all()
@@ -83,31 +83,24 @@ class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
 class DashboardMetricsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    def _get_allowed_users_for(self, request_user, view_as_id=None):
+    def _get_allowed_users_for(self, request_user, effective_user):
         """
-        Returns a queryset of users the current request_user is allowed to see data for.
-        If view_as_id is passed, it validates the request_user can view that user,
-        and returns only that user.
+        Returns a queryset of users based on the effective_user context.
+        The middleware already validated the relationship.
         """
         user_qs = User.objects.none()
 
-        if request_user.role == 'super_admin':
+        if effective_user.role == 'super_admin':
             user_qs = User.objects.all()
-        elif request_user.role == 'admin':
-            subordinates = User.objects.filter(reports_to=request_user)
+        elif effective_user.role == 'admin':
+            subordinates = User.objects.filter(reports_to=effective_user)
             sub_subordinates = User.objects.filter(reports_to__in=subordinates)
-            user_qs = User.objects.filter(id__in=list(subordinates.values_list('id', flat=True)) + list(sub_subordinates.values_list('id', flat=True)) + [request_user.id])
-        elif request_user.role == 'manager':
-            employees = User.objects.filter(reports_to=request_user)
-            user_qs = User.objects.filter(id__in=list(employees.values_list('id', flat=True)) + [request_user.id])
-        elif request_user.role == 'employee':
-            user_qs = User.objects.filter(id=request_user.id)
-            
-        if view_as_id:
-            # Validate the requested view_as_id belongs to the allowed subset
-            if not user_qs.filter(id=view_as_id).exists():
-                raise PermissionDenied("You do not have permission to view data for this user.")
-            user_qs = User.objects.filter(id=view_as_id)
+            user_qs = User.objects.filter(id__in=list(subordinates.values_list('id', flat=True)) + list(sub_subordinates.values_list('id', flat=True)) + [effective_user.id])
+        elif effective_user.role == 'manager':
+            employees = User.objects.filter(reports_to=effective_user)
+            user_qs = User.objects.filter(id__in=list(employees.values_list('id', flat=True)) + [effective_user.id])
+        elif effective_user.role == 'employee':
+            user_qs = User.objects.filter(id=effective_user.id)
             
         return user_qs
 
@@ -115,9 +108,8 @@ class DashboardMetricsView(APIView):
         return Task.objects.filter(assigned_to__in=allowed_users)
 
     def get(self, request):
-        view_as_id = request.query_params.get('view_as')
-        
-        allowed_users = self._get_allowed_users_for(request.user, view_as_id)
+        effective_user = getattr(request, 'effective_user', request.user)
+        allowed_users = self._get_allowed_users_for(request.user, effective_user)
         tasks = self.get_task_queryset_for_users(allowed_users)
         
         now = timezone.now().date()

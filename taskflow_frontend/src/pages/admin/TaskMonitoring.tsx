@@ -24,10 +24,15 @@ const TaskMonitoring = () => {
     const fetchTasks = async () => {
         setIsLoading(true);
         try {
-            // Reusing the official paginated admin endpoint
-            const { data } = await api.get(`/admin/tasks?page=${page}`);
-            setTasks(data.data || []);
-            setTotalPages(data.pages || 1);
+            const { data } = await api.get(`/tasks/?page=${page}`);
+            // Django Pagination vs Simple List
+            if (Array.isArray(data)) {
+                setTasks(data);
+                setTotalPages(1);
+            } else {
+                setTasks(data.results || data.data || []);
+                setTotalPages(Math.ceil((data.count || 0) / 10) || 1);
+            }
         } catch (error) {
             toast.error("Failed to fetch tasks");
         } finally {
@@ -82,12 +87,12 @@ const TaskMonitoring = () => {
                         </TableHeader>
                         <TableBody>
                             {tasks.map((task) => (
-                                <TableRow key={task._id || task.id}>
+                                <TableRow key={task.id}>
                                     <TableCell className="font-medium">{task.title}</TableCell>
-                                    <TableCell>{(task.assignedTo as any)?.firstName ? `${(task.assignedTo as any).firstName} ${(task.assignedTo as any).lastName}` : 'Unassigned'}</TableCell>
+                                    <TableCell>{task.assigned_to_name || 'Unassigned'}</TableCell>
                                     <TableCell>{getStatusBadge(task.status)}</TableCell>
                                     <TableCell>{getPriorityBadge(task.priority)}</TableCell>
-                                    <TableCell>{task.dueDate ? format(new Date(task.dueDate), 'PP') : 'No date'}</TableCell>
+                                    <TableCell>{task.due_date ? format(new Date(task.due_date), 'PP') : 'No date'}</TableCell>
                                 </TableRow>
                             ))}
                             {!isLoading && tasks.length === 0 && (

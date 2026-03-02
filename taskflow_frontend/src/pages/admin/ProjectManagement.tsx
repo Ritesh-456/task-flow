@@ -22,9 +22,15 @@ const ProjectManagement = () => {
     const fetchProjects = async () => {
         setIsLoading(true);
         try {
-            const { data } = await api.get(`/admin/projects?page=${page}`);
-            setProjects(data.data || []);
-            setTotalPages(data.pages || 1);
+            const { data } = await api.get(`/projects/?page=${page}`);
+            // Django Pagination vs Simple List
+            if (Array.isArray(data)) {
+                setProjects(data);
+                setTotalPages(1);
+            } else {
+                setProjects(data.results || data.data || []);
+                setTotalPages(Math.ceil((data.count || 0) / 10) || 1);
+            }
         } catch (error) {
             toast.error("Failed to fetch projects");
         } finally {
@@ -56,15 +62,13 @@ const ProjectManagement = () => {
                         </TableHeader>
                         <TableBody>
                             {projects.map((project) => (
-                                <TableRow key={project._id || project.id}>
+                                <TableRow key={project.id}>
                                     <TableCell className="font-medium whitespace-nowrap">{project.name}</TableCell>
                                     <TableCell className="whitespace-nowrap">
-                                        {project.createdBy && typeof project.createdBy === 'object'
-                                            ? `${(project.createdBy as any).firstName} ${(project.createdBy as any).lastName}`
-                                            : 'Unknown'}
+                                        {project.created_by_name || 'Unknown'}
                                     </TableCell>
                                     <TableCell className="capitalize whitespace-nowrap">{project.status || 'Active'}</TableCell>
-                                    <TableCell className="text-right whitespace-nowrap">{project.taskCount || 0}</TableCell>
+                                    <TableCell className="text-right whitespace-nowrap">{project.task_count || 0}</TableCell>
                                 </TableRow>
                             ))}
                             {!isLoading && projects.length === 0 && (

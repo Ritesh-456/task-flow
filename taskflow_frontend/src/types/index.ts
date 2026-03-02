@@ -9,6 +9,8 @@ export interface User {
   token?: string;
   firstName: string;
   lastName: string;
+  first_name?: string;
+  last_name?: string;
   email: string;
   role: UserRole | string; // Allow string to handle flexible backend responses initially
   avatar?: string;
@@ -41,35 +43,46 @@ export interface User {
 }
 
 export interface Project {
-  _id?: string;
-  id?: string;
+  id: string;
   name: string;
   description: string;
-  members: { userId: string; role: string }[] | string[];
-  createdBy?: string | User;
-  tenantId?: string;
+  members: ProjectMember[];
+  created_by?: string | number;
+  created_by_name?: string;
+  tenant?: string | number;
   status?: string;
-  createdAt?: string;
-  taskCount?: number;
-  completedCount?: number;
+  created_at?: string;
+  task_count?: number;
+  completed_count?: number;
+  // Deprecated MongoDB fields
+  _id?: string;
+}
+
+export interface ProjectMember {
+  id: number;
+  user: number;
+  user_email: string;
+  user_name: string;
+  role: string;
+  created_at: string;
 }
 
 export interface Task {
-  _id?: string;
-  id?: string;
+  id: string | number;
   title: string;
   description: string;
-  status: TaskStatus;
-  priority: TaskPriority;
-  dueDate: string;
-  assignedTo: string | User;
-  createdBy?: string;
-  projectId: string;
-  tenantId?: string;
-  aiPriority?: string;
-  aiRationale?: string;
-  comments?: { message: string; userId: string; createdAt: Date | string }[];
-  comment?: string;
+  status: TaskStatus | string;
+  priority: TaskPriority | string;
+  due_date: string;
+  assigned_to: string | number | User;
+  assigned_to_name?: string;
+  assigned_by?: string | number | User;
+  assigned_by_name?: string;
+  project: string | number;
+  tenant?: string | number;
+  // Frontend legacy/extended fields
+  dueDate?: string;
+  _id?: string;
   createdAt?: string;
   updatedAt?: string;
 }

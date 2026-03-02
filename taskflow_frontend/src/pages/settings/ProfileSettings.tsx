@@ -20,7 +20,11 @@ export default function ProfileSettings() {
         e.preventDefault();
         setIsLoading(true);
         try {
-            const { data } = await api.put("/users/profile", { firstName, lastName, email });
+            const { data } = await api.patch("/accounts/profile/", {
+                first_name: firstName,
+                last_name: lastName,
+                email
+            });
             updateUser(data);
             toast.success("Profile updated successfully");
         } catch (error: any) {
@@ -49,8 +53,8 @@ export default function ProfileSettings() {
                 headers: { "Content-Type": "multipart/form-data" },
             });
             // Update user profile with new avatar URL
-            const avatarUrl = `http://localhost:5000${data}`; // Ensure backend URL is correct
-            const { data: updatedUser } = await api.put("/users/profile", { avatar: avatarUrl });
+            const avatarUrl = data.url || data; // Assuming backend returns url
+            const { data: updatedUser } = await api.patch("/accounts/profile/", { avatar: avatarUrl });
             updateUser(updatedUser);
             toast.success("Avatar updated!", { id: toastId });
         } catch (error: any) {

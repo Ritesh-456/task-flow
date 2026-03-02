@@ -23,11 +23,17 @@ const UserManagement = () => {
     const fetchUsers = async () => {
         setIsLoading(true);
         try {
-            const { data } = await api.get(`/admin/users?page=${page}`);
-            setUsers(data.data);
-            setPage(data.page);
-            setTotalPages(data.pages);
+            const { data } = await api.get(`/accounts/users/?page=${page}`);
+            // Django Pagination vs Simple List
+            if (Array.isArray(data)) {
+                setUsers(data);
+                setTotalPages(1);
+            } else {
+                setUsers(data.results || data.data || []);
+                setTotalPages(Math.ceil((data.count || 0) / 10) || 1);
+            }
         } catch (error) {
+            console.error(error);
             toast.error("Failed to fetch users");
         } finally {
             setIsLoading(false);
@@ -48,7 +54,7 @@ const UserManagement = () => {
         }
 
         try {
-            await api.put(`/admin/users/${userId}/role`, { role: newRole });
+            await api.patch(`/accounts/users/${userId}/`, { role: newRole });
             toast.success("User role updated");
             fetchUsers();
         } catch (error) {
@@ -60,7 +66,7 @@ const UserManagement = () => {
         if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
 
         try {
-            await api.delete(`/admin/users/${userId}`);
+            await api.delete(`/accounts/users/${userId}/`);
             toast.success("User deleted");
             fetchUsers();
         } catch (error) {
@@ -88,7 +94,7 @@ const UserManagement = () => {
                         </TableHeader>
                         <TableBody>
                             {users.map((user) => (
-                                <TableRow key={user._id || user.id}>
+                                <TableRow key={user.id}>
                                     <TableCell className="font-medium whitespace-nowrap">{user.firstName} {user.lastName}</TableCell>
                                     <TableCell className="whitespace-nowrap">{user.email}</TableCell>
                                     <TableCell className="capitalize whitespace-nowrap">{user.role}</TableCell>
@@ -97,14 +103,14 @@ const UserManagement = () => {
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                onClick={() => handleRoleUpdate(user._id || user.id!, user.role as string)}
+                                                onClick={() => handleRoleUpdate(String(user.id), user.role as string)}
                                             >
                                                 <UserCog className="h-4 w-4" />
                                             </Button>
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                onClick={() => handleDelete(user._id || user.id!)}
+                                                onClick={() => handleDelete(String(user.id))}
                                                 className="text-destructive hover:text-destructive"
                                             >
                                                 <Trash2 className="h-4 w-4" />

@@ -5,7 +5,16 @@ from .models import Tenant, Invite
 from django.utils import timezone
 import secrets
 
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+
 User = get_user_model()
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        data['user'] = UserSerializer(self.user).data
+        return data
 
 class TenantSerializer(serializers.ModelSerializer):
     class Meta:
@@ -15,16 +24,22 @@ class TenantSerializer(serializers.ModelSerializer):
 
 class SuperAdminSignupSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(write_only=True)
+    plan = serializers.CharField(write_only=True, required=False, default='free')
     password = serializers.CharField(write_only=True, style={'input_type': 'password'})
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'password', 'company_name']
+        fields = ['first_name', 'last_name', 'email', 'password', 'company_name', 'plan']
 
     def create(self, validated_data):
         company_name = validated_data.pop('company_name')
+        plan = validated_data.pop('plan', 'free').lower()
         password = validated_data.pop('password')
         
+        # Validate plan choice
+        if plan not in dict(Tenant.PLAN_CHOICES):
+            plan = 'free'
+
         with transaction.atomic():
             # 1. Create User (super_admin)
             user = User.objects.create_user(
@@ -39,7 +54,7 @@ class SuperAdminSignupSerializer(serializers.ModelSerializer):
             tenant = Tenant.objects.create(
                 name=company_name,
                 owner=user,  # Set user as owner
-                plan='free'
+                plan=plan
             )
             
             # 3. Assign tenant to user
@@ -53,7 +68,7 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['id', 'first_name', 'last_name', 'email', 'role', 'tenant', 'is_active', 'created_at']
+        fields = ['id', 'first_name', 'last_name', 'email', 'role', 'tenant', 'avatar', 'is_active', 'created_at']
         read_only_fields = ['id', 'created_at', 'tenant']
 
 class StandardUserCreateSerializer(serializers.ModelSerializer):

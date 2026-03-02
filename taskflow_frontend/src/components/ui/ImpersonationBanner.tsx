@@ -18,7 +18,7 @@ export default function ImpersonationBanner() {
         <div className="bg-destructive text-destructive-foreground px-4 py-2 flex items-center justify-center gap-3 w-full shadow-md z-[60] fixed top-0 left-0">
             <Eye className="h-4 w-4 animate-pulse" />
             <span className="text-sm font-medium">
-                Previewing as: {impersonatedUser.name} ({impersonatedUser.role.replace("_", " ")})
+                Viewing as: {impersonatedUser.firstName || impersonatedUser.first_name || (impersonatedUser as any).name || 'User'} ({impersonatedUser.role.replace("_", " ")})
             </span>
             <Button
                 variant="outline"

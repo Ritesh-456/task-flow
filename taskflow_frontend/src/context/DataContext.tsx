@@ -13,6 +13,10 @@ interface DataContextType {
     users: User[];
     notifications: Notification[];
     addProject: (project: Project) => void;
+    updateProject: (projectId: string, updates: Partial<Project>) => void;
+    deleteProject: (projectId: string) => void;
+    addProjectMember: (projectId: string, userId: string, role: string) => Promise<void>;
+    removeProjectMember: (memberId: string) => Promise<void>;
     addTask: (task: Task) => void;
     updateTask: (taskId: string, updates: Partial<Task>) => void;
     deleteTask: (taskId: string) => void;
@@ -39,16 +43,16 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
                 const queryParam = viewAsUserId ? `?userId=${viewAsUserId}` : '';
 
                 // Fetch Users (Team Members)
-                const usersRes = await api.get(`/users/team-members${queryParam}`).catch(() => ({ data: { data: [] } }));
-                setUsers(usersRes.data.data || []);
+                const usersRes = await api.get("/accounts/users/").catch(() => ({ data: [] }));
+                setUsers(Array.isArray(usersRes.data) ? usersRes.data : (usersRes.data?.data || []));
 
                 // Fetch Tasks
-                const tasksRes = await api.get(`/tasks${queryParam}`).catch(() => ({ data: { data: [] } }));
-                setTasks(tasksRes.data.data || []);
+                const tasksRes = await api.get("/tasks/").catch(() => ({ data: [] }));
+                setTasks(Array.isArray(tasksRes.data) ? tasksRes.data : (tasksRes.data?.data || []));
 
                 // Fetch Projects
-                const projectsRes = await api.get(`/projects${queryParam}`).catch(() => ({ data: { data: [] } }));
-                setProjects(projectsRes.data.data || []);
+                const projectsRes = await api.get("/projects/").catch(() => ({ data: [] }));
+                setProjects(Array.isArray(projectsRes.data) ? projectsRes.data : (projectsRes.data?.data || []));
 
                 // Notifications - hard to mock unless we have an endpoint
                 setNotifications(mockNotifications);
@@ -66,7 +70,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
     const addProject = async (project: Project) => {
         try {
-            const { data } = await api.post('/projects', project);
+            const { data } = await api.post('/projects/', project);
             setProjects((prev) => [...prev, data]);
         } catch (e) {
             console.error("Failed to add project", e);
@@ -74,9 +78,57 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
+    const updateProject = async (projectId: string, updates: Partial<Project>) => {
+        try {
+            const { data } = await api.patch(`/projects/${projectId}/`, updates);
+            setProjects((prev) => prev.map((p) => (p.id === projectId || p._id === projectId ? data : p)));
+            toast.success("Project updated");
+        } catch (e) {
+            console.error("Failed to update project", e);
+            toast.error("Failed to update project");
+        }
+    };
+
+    const deleteProject = async (projectId: string) => {
+        try {
+            await api.delete(`/projects/${projectId}/`);
+            setProjects((prev) => prev.filter(p => p.id !== projectId && p._id !== projectId));
+            toast.success("Project deleted");
+        } catch (e) {
+            console.error("Failed to delete project", e);
+            toast.error("Failed to delete project");
+        }
+    };
+
+    const addProjectMember = async (project: string, user: string, role: string) => {
+        try {
+            const { data } = await api.post('/projects/members/', { project, user, role });
+            // Refresh projects to get updated member list
+            const projectsRes = await api.get("/projects/");
+            setProjects(Array.isArray(projectsRes.data) ? projectsRes.data : (projectsRes.data?.data || []));
+            toast.success("Member added to project");
+        } catch (e) {
+            console.error("Failed to add project member", e);
+            toast.error("Failed to add member");
+        }
+    };
+
+    const removeProjectMember = async (memberId: string) => {
+        try {
+            await api.delete(`/projects/members/${memberId}/`);
+            // Refresh projects to get updated member list
+            const projectsRes = await api.get("/projects/");
+            setProjects(Array.isArray(projectsRes.data) ? projectsRes.data : (projectsRes.data?.data || []));
+            toast.success("Member removed from project");
+        } catch (e) {
+            console.error("Failed to remove project member", e);
+            toast.error("Failed to remove member");
+        }
+    };
+
     const addTask = async (task: Task) => {
         try {
-            const { data } = await api.post('/tasks', task);
+            const { data } = await api.post('/tasks/', task);
             setTasks((prev) => [...prev, data]);
             toast.success("Task created");
         } catch (e) {
@@ -87,7 +139,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
     const updateTask = async (taskId: string, updates: Partial<Task>) => {
         try {
-            const { data } = await api.put(`/tasks/${taskId}`, updates);
+            const { data } = await api.put(`/tasks/${taskId}/`, updates);
             setTasks((prev) => prev.map((t) => (t.id === taskId || t._id === taskId ? data : t)));
         } catch (e) {
             console.error("Failed to update task", e);
@@ -97,7 +149,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
     const deleteTask = async (taskId: string) => {
         try {
-            await api.delete(`/tasks/${taskId}`);
+            await api.delete(`/tasks/${taskId}/`);
             setTasks((prev) => prev.filter(t => t.id !== taskId && t._id !== taskId));
             toast.success("Task deleted");
         } catch (e) {
@@ -127,6 +179,10 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
                 users,
                 notifications,
                 addProject,
+                updateProject,
+                deleteProject,
+                addProjectMember,
+                removeProjectMember,
                 addTask,
                 updateTask,
                 deleteTask,

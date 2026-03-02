@@ -100,7 +100,9 @@ const TopNav = ({ sidebarOpen, onToggleSidebar }: TopNavProps) => {
               </div>
             )}
             <div className="hidden md:block">
-              <p className="text-sm font-medium text-foreground">{user?.firstName ? `${user.firstName} ${user.lastName}` : 'Loading...'}</p>
+              <p className="text-sm font-medium text-foreground">
+                {user?.firstName || user?.first_name ? `${user?.firstName || user?.first_name} ${user?.lastName || user?.last_name || ''}` : 'Loading...'}
+              </p>
               <p className="text-xs capitalize text-muted-foreground">
                 {impersonatedUser ? `[${user?.role?.replace("_", " ")}] Impersonating...` : user?.role?.replace("_", " ") || 'User'}
               </p>

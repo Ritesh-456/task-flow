@@ -33,8 +33,10 @@ export default function ImpersonationSelector() {
                 // but our API interceptor handles it globally. We want to fetch as the REAL user,
                 // so we must temporarily strip the header or the backend handles req.realUser properly.
                 // Our backend handles `req.realUser` logic so it's fine.
-                const { data } = await api.get(`/users/impersonation-targets?role=${selectedRole}`);
-                setTargets(data);
+                const { data } = await api.get(`/accounts/users/?role=${selectedRole}`);
+                // Handle paginated responses if necessary
+                const userList = Array.isArray(data) ? data : (data.results || []);
+                setTargets(userList);
             } catch (error) {
                 console.error("Failed to fetch impersonation targets", error);
             } finally {
@@ -45,18 +47,25 @@ export default function ImpersonationSelector() {
         fetchTargets();
     }, [isOpen, selectedRole]);
 
-    const handleSelectUser = (target: User) => {
-        setImpersonatedUser(target);
-        localStorage.setItem("taskflow_impersonated_user", target._id);
-        localStorage.setItem("taskflow_impersonated_user_data", JSON.stringify(target));
+    const handleSelectUser = (target: User | null) => {
+        if (!target) {
+            // Revert to "Self"
+            setImpersonatedUser(null);
+            localStorage.removeItem("taskflow_impersonated_user");
+            localStorage.removeItem("taskflow_impersonated_user_data");
+        } else {
+            setImpersonatedUser(target);
+            localStorage.setItem("taskflow_impersonated_user", String(target.id));
+            localStorage.setItem("taskflow_impersonated_user_data", JSON.stringify(target));
+        }
         setIsOpen(false);
         // Force reload to completely refresh application state contexts (Dashboard data, projects, etc)
         window.location.reload();
     };
 
     const filteredTargets = targets.filter(t =>
-        t._id !== user._id &&
-        ((`${t.firstName || ''} ${t.lastName || ''}`).toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.id !== user.id &&
+        ((`${t.firstName || t.first_name || ''} ${t.lastName || t.last_name || ''}`).toLowerCase().includes(searchQuery.toLowerCase()) ||
             (t.email || '').toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
@@ -75,10 +84,18 @@ export default function ImpersonationSelector() {
                             <SelectValue placeholder="Filter by Role" />
                         </SelectTrigger>
                         <SelectContent className="z-[60]">
-                            {user.role === 'super_admin' && <SelectItem value="super_admin">Super Admins</SelectItem>}
-                            {user.role === 'super_admin' && <SelectItem value="admin">Admins</SelectItem>}
-                            <SelectItem value="manager">Managers</SelectItem>
-                            <SelectItem value="employee">Employees</SelectItem>
+                            {user.role === 'super_admin' && (
+                                <>
+                                    <SelectItem value="super_admin">Super Admins</SelectItem>
+                                    <SelectItem value="admin">Admins</SelectItem>
+                                </>
+                            )}
+                            {['super_admin', 'admin'].includes(user.role) && (
+                                <SelectItem value="manager">Managers</SelectItem>
+                            )}
+                            {['super_admin', 'admin', 'manager'].includes(user.role) && (
+                                <SelectItem value="employee">Employees</SelectItem>
+                            )}
                         </SelectContent>
                     </Select>
 
@@ -94,14 +111,27 @@ export default function ImpersonationSelector() {
                     </div>
 
                     <div className="max-h-[200px] overflow-y-auto space-y-1 rounded-md border border-border p-1">
+                        <button
+                            onClick={() => handleSelectUser(null)}
+                            className="flex w-full items-center gap-3 rounded-sm p-2 text-left hover:bg-muted transition-colors border-b border-border/50 mb-1"
+                        >
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
+                                ME
+                            </div>
+                            <div className="flex flex-col overflow-hidden">
+                                <span className="truncate text-sm font-medium">Me (Original Context)</span>
+                                <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+                            </div>
+                        </button>
+
                         {isLoading ? (
                             <div className="flex justify-center p-4"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
                         ) : filteredTargets.length === 0 ? (
-                            <div className="p-4 text-center text-sm text-muted-foreground">No users found.</div>
+                            <div className="p-4 text-center text-sm text-muted-foreground">No other users found.</div>
                         ) : (
                             filteredTargets.map(target => (
                                 <button
-                                    key={target._id}
+                                    key={target.id}
                                     onClick={() => handleSelectUser(target)}
                                     className="flex w-full items-center gap-3 rounded-sm p-2 text-left hover:bg-muted transition-colors"
                                 >
@@ -109,7 +139,7 @@ export default function ImpersonationSelector() {
                                         <img src={target.avatar} alt={`${target.firstName} ${target.lastName}`} className="h-8 w-8 rounded-full object-cover" />
                                     ) : (
                                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/20 text-xs font-semibold text-primary">
-                                            {(target.firstName?.[0] || target.email?.[0] || '?').toUpperCase()}
+                                            {(target.firstName?.[0] || target.first_name?.[0] || target.email?.[0] || '?').toUpperCase()}
                                         </div>
                                     )}
                                     <div className="flex flex-col overflow-hidden">

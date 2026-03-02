@@ -2,10 +2,21 @@ from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
-from .serializers import SuperAdminSignupSerializer, UserSerializer, StandardUserCreateSerializer, InviteGenerateSerializer, InviteSignupSerializer
+from .serializers import (
+    SuperAdminSignupSerializer, 
+    UserSerializer, 
+    StandardUserCreateSerializer, 
+    InviteGenerateSerializer, 
+    InviteSignupSerializer,
+    CustomTokenObtainPairSerializer
+)
 from .models import Invite
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 User = get_user_model()
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
 
 class SuperAdminSignupView(generics.CreateAPIView):
     """
@@ -39,25 +50,32 @@ class UserListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
+        role_filter = self.request.query_params.get('role')
         
-        # Super Admin: all users in tenant
+        # Base QuerySet: enforce tenant isolation
+        queryset = User.objects.all()
+        
+        # Apply role hierarchy
         if user.role == 'super_admin':
-            return User.objects.all() # Middleware handles tenant filtering
-            
-        # Admin: users where reports_to = admin
+            # Super Admin can see everyone in their tenant (handled by middleware)
+            pass
         elif user.role == 'admin':
-            return User.objects.filter(reports_to=user)
-            
-        # Manager: employees where reports_to = manager
+            # Admin sees subordinates
+            queryset = queryset.filter(reports_to=user)
         elif user.role == 'manager':
             # Manager sees employees directly under them
-            return User.objects.filter(reports_to=user, role='employee')
-            
-        # Employee: only self
+            queryset = queryset.filter(reports_to=user, role='employee')
         elif user.role == 'employee':
-            return User.objects.filter(id=user.id)
+            # Employee only sees self
+            queryset = queryset.filter(id=user.id)
+        else:
+            return User.objects.none()
+
+        # Apply additional role filtering via query param if provided
+        if role_filter:
+            queryset = queryset.filter(role=role_filter)
             
-        return User.objects.none()
+        return queryset
 
 class GenerateInviteView(generics.CreateAPIView):
     """
@@ -85,3 +103,23 @@ class ConsumeInviteView(generics.CreateAPIView):
             "message": "User registered successfully via invite.",
             "user": user_serializer.data
         }, status=status.HTTP_201_CREATED)
+
+class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'super_admin':
+            return User.objects.all()
+        return User.objects.filter(id=user.id)
+
+class UserProfileView(generics.RetrieveUpdateAPIView):
+    """
+    GET, PUT, PATCH current user's profile.
+    """
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
