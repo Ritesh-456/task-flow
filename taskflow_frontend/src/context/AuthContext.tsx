@@ -105,7 +105,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const login = async (email: string, password: string) => {
         setIsLoading(true);
         try {
-            const { data } = await api.post("/accounts/login/", { email, password });
+            // Trim inputs to prevent copy-paste whitespace from failing the backend check
+            const cleanEmail = email.trim();
+            const cleanPassword = password.trim();
+
+            const { data } = await api.post("/accounts/login/", { email: cleanEmail, password: cleanPassword });
             // Django Custom View returns { access, refresh, user }
             const { access, user: userData } = data;
             const normalizedUser = normalizeUser(userData);
