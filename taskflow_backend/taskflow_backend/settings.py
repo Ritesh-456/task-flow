@@ -145,7 +145,10 @@ if _DB_HOST:
             'CONN_MAX_AGE': 600,
             'OPTIONS': {
                 'sslmode': 'require',
+                'options': '-c statement_timeout=0',
             },
+            # PgBouncer transaction mode requires server-side cursors to be disabled:
+            'DISABLE_SERVER_SIDE_CURSORS': True,
         }
     }
 else:
