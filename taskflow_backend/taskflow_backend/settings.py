@@ -129,14 +129,34 @@ ALLOWED_HOSTS = [
     '*', # Temporarily allow all for Vercel preview domain wildcard matching
 ]
 
-DATABASES = {
-    # Default to sqlite locally, but use Supabase Database URL in production (Render)
-    'default': dj_database_url.config(
-        default='sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite3'),
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
-}
+
+# Use individual DB env vars if set (required for Supabase pooler on Render - dj_database_url
+# strips the dot from the username e.g. postgres.projectref which breaks auth)
+_DB_HOST = os.environ.get('DB_HOST')
+if _DB_HOST:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('DB_NAME', 'postgres'),
+            'USER': os.environ.get('DB_USER', 'postgres'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+            'HOST': _DB_HOST,
+            'PORT': os.environ.get('DB_PORT', '5432'),
+            'CONN_MAX_AGE': 600,
+            'OPTIONS': {
+                'sslmode': 'require',
+            },
+        }
+    }
+else:
+    # Fallback: SQLite for local development
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
+    }
+
 
 # Added Vercel wildcards for cross-origin tracking
 CORS_ALLOW_ALL_ORIGINS = True # Override for Vercel preview environments
