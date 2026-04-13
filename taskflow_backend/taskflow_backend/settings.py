@@ -1,13 +1,13 @@
 import os
 from pathlib import Path
 from datetime import timedelta
-import dj_database_url
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'your-secret-key-replace-in-production'
-DEBUG = True
-ALLOWED_HOSTS = ['*']
+SECRET_KEY = os.environ.get('SECRET_KEY', 'your-secret-key-replace-in-production')
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -35,6 +35,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -101,6 +102,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'accounts.User'
@@ -123,11 +125,7 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
 }
 
-ALLOWED_HOSTS = [
-    'localhost', 
-    '127.0.0.1', 
-    '*', # Temporarily allow all for Vercel preview domain wildcard matching
-]
+# ALLOWED_HOSTS is already defined above from environment variables.
 
 
 # Use individual DB env vars if set (required for Supabase pooler on Render - dj_database_url
@@ -162,7 +160,12 @@ else:
 
 
 # Added Vercel wildcards for cross-origin tracking
-CORS_ALLOW_ALL_ORIGINS = True # Override for Vercel preview environments
+_CORS_ALLOWED = os.environ.get('CORS_ALLOWED_ORIGINS')
+if _CORS_ALLOWED:
+    CORS_ALLOWED_ORIGINS = _CORS_ALLOWED.split(',')
+else:
+    CORS_ALLOW_ALL_ORIGINS = True # Override for Vercel preview environments
+
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
     "accept",

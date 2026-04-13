@@ -1,3 +1,4 @@
+import os
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -125,7 +126,7 @@ class InviteGenerateSerializer(serializers.ModelSerializer):
 
     def get_invite_link(self, obj):
         request = self.context.get('request')
-        origin = request.headers.get('Origin', 'http://localhost:8080')
+        origin = request.headers.get('Origin', os.environ.get('FRONTEND_URL', 'http://localhost:5173'))
         return f"{origin}/signup?code={obj.code}"
 
     def get_message(self, obj):
