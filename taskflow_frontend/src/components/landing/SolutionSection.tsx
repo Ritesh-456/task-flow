@@ -62,9 +62,12 @@ const SolutionSection = () => {
                     </div>
 
                     <div className="md:w-1/2">
-                        {/* Placeholder for an image or graphic */}
-                        <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-border bg-card h-[400px] flex items-center justify-center gradient-hero">
-                            <span className="text-muted-foreground font-medium">Solution Interface Preview</span>
+                        <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-border bg-card group">
+                            <img 
+                                src="/images/dashboard_preview.png" 
+                                alt="TaskFlow Dashboard Preview" 
+                                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
+                            />
                         </div>
                     </div>
                 </div>
