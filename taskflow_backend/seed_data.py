@@ -30,10 +30,10 @@ def run_seed():
 
     print("Creating Super Admin...")
     super_admin = User.objects.create_user(
-        email="ritesh.sharma@shreetech.com",
+        email="ritesh.brahmachari@shreetech.com",
         password="Test@123",
         first_name="Ritesh",
-        last_name="Sharma",
+        last_name="Brahmachari",
         role="super_admin",
         tenant=tenant,
         avatar="/avatars/image_1.webp"
