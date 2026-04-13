@@ -65,8 +65,13 @@ const SolutionSection = () => {
                         <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-border bg-card group">
                             <img 
                                 src="/images/dashboard_preview.png" 
-                                alt="TaskFlow Dashboard Preview" 
-                                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
+                                alt="TaskFlow Dashboard Preview Light" 
+                                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105 dark:hidden"
+                            />
+                            <img 
+                                src="/images/dashboard_mockup.png" 
+                                alt="TaskFlow Dashboard Preview Dark" 
+                                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105 hidden dark:block"
                             />
                         </div>
                     </div>
