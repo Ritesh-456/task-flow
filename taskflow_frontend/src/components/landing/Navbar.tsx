@@ -82,25 +82,28 @@ const Navbar = () => {
           ))}
         </div>
 
-        <div className="hidden md:flex items-center gap-3">
-          <Button variant="ghost" asChild>
-            <Link to="/login">Login</Link>
-          </Button>
-          <Button asChild className="gradient-primary border-0 text-primary-foreground hover:opacity-90">
-            <Link to="/signup">Sign Up</Link>
-          </Button>
+        <div className="flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-3">
+            <Button variant="ghost" asChild>
+              <Link to="/login">Login</Link>
+            </Button>
+            <Button asChild className="gradient-primary border-0 text-primary-foreground hover:opacity-90">
+              <Link to="/signup">Sign Up</Link>
+            </Button>
+          </div>
+          
           <button
             onClick={toggleTheme}
-            className="ml-2 inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-muted transition-colors text-foreground"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-muted transition-colors text-foreground"
           >
             {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </button>
-        </div>
 
-        {/* Mobile toggle */}
-        <button className="md:hidden text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
-          {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+          {/* Mobile toggle */}
+          <button className="md:hidden ml-2 text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
+            {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}
