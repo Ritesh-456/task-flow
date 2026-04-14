@@ -15,9 +15,12 @@ api.interceptors.request.use((config) => {
     const impersonatedId = localStorage.getItem('taskflow_impersonated_user');
     const token = localStorage.getItem('taskflow_token');
 
+    const isAuthRoute = config.url?.includes('/accounts/login') || config.url?.includes('/accounts/signup');
+
     if (config.headers) {
         if (impersonatedId) config.headers['X-View-As-User'] = impersonatedId;
-        if (token) config.headers['Authorization'] = `Bearer ${token}`;
+        // Prevent sending obsolete tokens to public auth routes
+        if (token && !isAuthRoute) config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
 }, (error) => {
