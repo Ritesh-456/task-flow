@@ -180,8 +180,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             window.location.href = '/login';
             return true;
         } catch (error: any) {
-            console.error(error);
-            toast.error(error.response?.data?.message || "Super Admin registration failed");
+            console.error("Signup error details:", error);
+            const errData = error.response?.data;
+            let errMsg = "Super Admin registration failed";
+            if (errData) {
+                if (errData.message && typeof errData.message === 'string') {
+                    errMsg = errData.message;
+                } else if (errData.detail) {
+                    errMsg = errData.detail;
+                } else if (typeof errData === 'object') {
+                    // Extract first error message from DRF validation object
+                    const firstKey = Object.keys(errData)[0];
+                    const firstError = errData[firstKey];
+                    if (Array.isArray(firstError)) {
+                        errMsg = `${firstKey}: ${firstError[0]}`;
+                    } else if (typeof firstError === 'string') {
+                        errMsg = `${firstKey}: ${firstError}`;
+                    }
+                }
+            }
+            toast.error(errMsg);
             return false;
         } finally {
             setIsLoading(false);
